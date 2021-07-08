@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Returns this code as a string</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocode.construct.html">« MongoCode::__construct</a></li>
+      <li style="float: right;"><a href="class.mongodate.html">MongoDate »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocode.html">MongoCode</a></li>
+    <li>Returns this code as a string</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocode.tostring" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCode::__toString</h1>
+  <p class="verinfo">(PECL mongo &gt;= 0.8.3)</p><p class="refpurpose"><span class="refname">MongoCode::__toString</span> &mdash; <span class="dc-title">Returns this code as a string</span></p>
+
+ </div>
+
+ <div id="mongocode.tostring-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension.</p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocode.tostring-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCode::__toString</strong></span>(): <span class="type">string</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocode.tostring-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocode.tostring-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   This code, the scope is not returned.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocode.tostring-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-171">
+   <p><strong>Example #1 <span class="function"><strong>MongoCode::__toString()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$code&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCode</span><span style="color: #007700">(</span><span style="color: #DD0000">'return&nbsp;x;'</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"x"</span><span style="color: #007700">=&gt;</span><span style="color: #DD0000">"hi"</span><span style="color: #007700">));<br />echo&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #0000BB">$code</span><span style="color: #DD0000">\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$code&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCode</span><span style="color: #007700">(</span><span style="color: #DD0000">'function()&nbsp;{&nbsp;for(i=0;i&lt;10;i++)&nbsp;{&nbsp;db.foo.update({x:i},&nbsp;{x:i+1});&nbsp;}&nbsp;}'</span><span style="color: #007700">);<br />echo&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #0000BB">$code</span><span style="color: #DD0000">\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+return x;
+function() { for(i=0;i&lt;10;i++) { db.foo.update({x:i}, {x:i+1}); } }
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+</div></div></div></body></html>

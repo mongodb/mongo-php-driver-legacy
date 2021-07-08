@@ -1,0 +1,450 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoClient class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.core.html">« Core Classes</a></li>
+      <li style="float: right;"><a href="mongoclient.close.html">MongoClient::close »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.core.html">Core Classes</a></li>
+    <li>The MongoClient class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongoclient" class="reference">
+
+ <h1 class="title">The MongoClient class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;=1.3.0)</p>
+  
+
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="para">This extension that defines this class
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+Alternatives to this class include:</p>
+   <ul class="simplelist">
+    <li class="member"><strong class="classname">MongoDB\Driver\Manager</strong></li>
+   </ul>
+  </div>
+
+  <div class="section" id="mongoclient.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    A connection manager for PHP and MongoDB.
+   </p>
+   <p class="para">
+    This class is used to create and manage connections. A typical use is:
+    <div class="example" id="mongoclient.intro-example">
+     <p><strong>Example #1 <strong class="classname">MongoClient</strong> basic usage</strong></p>
+     <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();&nbsp;</span><span style="color: #FF8000">//&nbsp;connect<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foo</span><span style="color: #007700">;&nbsp;</span><span style="color: #FF8000">//&nbsp;get&nbsp;the&nbsp;database&nbsp;named&nbsp;"foo"<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+     </div>
+
+    </div>
+   </p>
+   <p class="para">
+    See <span class="function"><a href="mongoclient.construct.html" class="function">MongoClient::__construct()</a></span> and the section on
+    <a href="mongo.connecting.html" class="link">connecting</a> for more information
+    about creating connections.
+   </p>
+  </div>
+  
+
+  <div class="section" id="mongoclient.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+   
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+    
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoClient</strong>
+     </span>
+     {</div>
+    
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Constants */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.version"><var class="varname">VERSION</var></a></var>;</div>
+
+    <div class="fieldsynopsis"><span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.defaulthost"><var class="varname">DEFAULT_HOST</var></a></var><span class="initializer"> = &quot;localhost&quot;</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.defaultport"><var class="varname">DEFAULT_PORT</var></a></var><span class="initializer"> = 27017</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.rpprimary"><var class="varname">RP_PRIMARY</var></a></var><span class="initializer"> = &quot;primary&quot;</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.rpprimarypreferred"><var class="varname">RP_PRIMARY_PREFERRED</var></a></var><span class="initializer"> = &quot;primaryPreferred&quot;</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.rpsecondary"><var class="varname">RP_SECONDARY</var></a></var><span class="initializer"> = &quot;secondary&quot;</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.rpsecondary"><var class="varname">RP_SECONDARY_PREFERRED</var></a></var><span class="initializer"> = &quot;secondaryPreferred&quot;</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">string</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongoclient.html#mongoclient.constants.rpsecondary"><var class="varname">RP_NEAREST</var></a></var><span class="initializer"> = &quot;nearest&quot;</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Properties */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">public</span>
+     <span class="type">bool</span>
+      <var class="varname"><a href="class.mongoclient.html#mongoclient.props.connected">$<var class="varname">connected</var></a></var><span class="initializer"> = <strong><code>false</code></strong></span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">public</span>
+     <span class="type">string</span>
+      <var class="varname"><a href="class.mongoclient.html#mongoclient.props.status">$<var class="varname">status</var></a></var><span class="initializer"> = <strong><code>null</code></strong></span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">protected</span>
+     <span class="type">string</span>
+      <var class="varname">$<var class="varname">server</var></var><span class="initializer"> = <strong><code>null</code></strong></span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">protected</span>
+     <span class="type">bool</span>
+      <var class="varname">$<var class="varname">persistent</var></var><span class="initializer"> = <strong><code>null</code></strong></span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Methods */</div>
+    <div class="constructorsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><a href="mongoclient.construct.html" class="methodname">__construct</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$server</code><span class="initializer"> = &quot;mongodb://localhost:27017&quot;</span></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array(&quot;connect&quot; =&gt; <strong><code>true</code></strong>)</span></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$driver_options</code><span class="initializer"> = ?</span></span>)</div>
+
+    <div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.close.html" class="methodname">close</a></span>(<span class="methodparam"><span class="type"><span class="type">bool</span>|<span class="type">string</span></span> <code class="parameter">$connection</code><span class="initializer"> = ?</span></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.connect.html" class="methodname">connect</a></span>(): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.dropdb.html" class="methodname">dropDB</a></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$db</code></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.get.html" class="methodname">__get</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$dbname</code></span>): <span class="type"><a href="class.mongodb.html" class="type MongoDB">MongoDB</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongoclient.getconnections.html" class="methodname">getConnections</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.gethosts.html" class="methodname">getHosts</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.getreadpreference.html" class="methodname">getReadPreference</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.getwriteconcern.html" class="methodname">getWriteConcern</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.killcursor.html" class="methodname">killCursor</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$server_hash</code></span>, <span class="methodparam"><span class="type"><span class="type">int</span>|<span class="type"><a href="class.mongoint64.html" class="type MongoInt64">MongoInt64</a></span></span> <code class="parameter">$id</code></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.listdbs.html" class="methodname">listDBs</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.selectcollection.html" class="methodname">selectCollection</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$db</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$collection</code></span>): <span class="type"><a href="class.mongocollection.html" class="type MongoCollection">MongoCollection</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.selectdb.html" class="methodname">selectDB</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>): <span class="type"><a href="class.mongodb.html" class="type MongoDB">MongoDB</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.setreadpreference.html" class="methodname">setReadPreference</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$read_preference</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$tags</code><span class="initializer"> = ?</span></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.setwriteconcern.html" class="methodname">setWriteConcern</a></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$w</code></span>, <span class="methodparam"><span class="type">int</span> <code class="parameter">$wtimeout</code><span class="initializer"> = ?</span></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongoclient.tostring.html" class="methodname">__toString</a></span>(): <span class="type">string</span></div>
+
+   }</div>
+   
+
+  </div>
+
+
+  <div class="section" id="mongoclient.constants">
+   <h2 class="title">Predefined Constants</h2>
+   <div class="section" id="mongoclient.constants.types">
+    <h2 class="title">MongoClient Constants</h2>
+    <dl>
+
+     
+      <dt id="mongoclient.constants.version"><strong><code>MongoClient::VERSION</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        PHP driver version. May be suffixed with &quot;dev&quot;, &quot;+&quot; or &quot;-&quot; if it is
+        in-between versions.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.defaulthost"><strong><code>MongoClient::DEFAULT_HOST</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Host to connect to if no host is given.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.defaultport"><strong><code>MongoClient::DEFAULT_PORT</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Port to connect to if no port is given.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.rpprimary"><strong><code>MongoClient::RP_PRIMARY</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        <a href="mongo.readpreferences.html" class="link">Read preference</a> for the
+        primary replica set member.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.rpprimarypreferred"><strong><code>MongoClient::RP_PRIMARY_PREFERRED</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        <a href="mongo.readpreferences.html" class="link">Read preference</a> for
+        preferring the primary replica set member.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.rpsecondary"><strong><code>MongoClient::RP_SECONDARY</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        <a href="mongo.readpreferences.html" class="link">Read preference</a> for a
+        secondary replica set member.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.rpsecondarypreferred"><strong><code>MongoClient::RP_SECONDARY_PREFERRED</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        <a href="mongo.readpreferences.html" class="link">Read preference</a> for
+        preferring a secondary replica set member.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongoclient.constants.rpnearest"><strong><code>MongoClient::RP_NEAREST</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        <a href="mongo.readpreferences.html" class="link">Read preference</a> for the
+        nearest replica set member.
+       </span>
+      </dd>
+
+     
+    </dl>
+
+   </div>
+  </div>
+
+  <div class="section" id="mongoclient.fields">
+   <h2 class="title">Fields</h2>
+   <dl>
+
+    
+     <dt id="mongoclient.props.connected"><var class="varname">connected</var></dt>
+
+     <dd>
+
+      <p class="para">
+       This property will be set to <strong><code>true</code></strong> if we have a open connection to
+       the database, <strong><code>false</code></strong> otherwise. If the connection is to a replica set,
+       this property will only be <strong><code>true</code></strong> if the driver has a connection to a
+       node matching the current read preference. This property does not take
+       authentication into account.
+      </p>
+      <p class="para">
+       This property is <em class="emphasis">deprecated</em> since version 1.5.0.
+      </p>
+     </dd>
+
+    
+    
+     <dt id="mongoclient.props.status"><var class="varname">status</var></dt>
+
+     <dd>
+
+      <p class="para">
+       This property is no longer used and will be set to <strong><code>null</code></strong> In driver
+       versions 1.1.x and earlier, this may be set to a string value (e.g.
+       <code class="literal">&quot;recycled&quot;</code>, <code class="literal">&quot;new&quot;</code>) when persistent
+       connections are used.
+      </p>
+      <p class="para">
+       This property is <em class="emphasis">deprecated</em> since version 1.5.0.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </div>
+
+  <div class="section" id="mongoclient.seealso">
+   <h2 class="title">See Also</h2>
+   <ul class="simplelist">
+    <li class="member"><a href="mongo.readpreferences.html" class="xref">Read Preferences</a></li>
+    <li class="member"><a href="mongo.writeconcerns.html" class="xref">Write Concerns</a></li>
+    <li class="member"><a href="mongo.connecting.html" class="xref">Connecting</a></li>
+    <li class="member">MongoDB core docs on <a href="https://docs.mongodb.com/manual/reference/connection-string/" class="link external">&raquo;&nbsp;connecting</a></li>
+   </ul>
+  </div>
+
+
+ </div>
+
+ 
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+<h2>Table of Contents</h2><ul class="chunklist chunklist_reference"><li><a href="mongoclient.close.html">MongoClient::close</a> — Closes this connection</li><li><a href="mongoclient.connect.html">MongoClient::connect</a> — Connects to a database server</li><li><a href="mongoclient.construct.html">MongoClient::__construct</a> — Creates a new database connection object</li><li><a href="mongoclient.dropdb.html">MongoClient::dropDB</a> — Drops a database [deprecated]</li><li><a href="mongoclient.get.html">MongoClient::__get</a> — Gets a database</li><li><a href="mongoclient.getconnections.html">MongoClient::getConnections</a> — Return info about all open connections</li><li><a href="mongoclient.gethosts.html">MongoClient::getHosts</a> — Updates status for all associated hosts</li><li><a href="mongoclient.getreadpreference.html">MongoClient::getReadPreference</a> — Get the read preference for this connection</li><li><a href="mongoclient.getwriteconcern.html">MongoClient::getWriteConcern</a> — Get the write concern for this connection</li><li><a href="mongoclient.killcursor.html">MongoClient::killCursor</a> — Kills a specific cursor on the server</li><li><a href="mongoclient.listdbs.html">MongoClient::listDBs</a> — Lists all of the databases available</li><li><a href="mongoclient.selectcollection.html">MongoClient::selectCollection</a> — Gets a database collection</li><li><a href="mongoclient.selectdb.html">MongoClient::selectDB</a> — Gets a database</li><li><a href="mongoclient.setreadpreference.html">MongoClient::setReadPreference</a> — Set the read preference for this connection</li><li><a href="mongoclient.setwriteconcern.html">MongoClient::setWriteConcern</a> — Set the write concern for this connection</li><li><a href="mongoclient.tostring.html">MongoClient::__toString</a> — String representation of this connection</li></ul>
+</div>
+</div></div></body></html>

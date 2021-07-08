@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Description</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongoupdatebatch.html">« MongoUpdateBatch</a></li>
+      <li style="float: right;"><a href="class.mongodeletebatch.html">MongoDeleteBatch »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoupdatebatch.html">MongoUpdateBatch</a></li>
+    <li>Description</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoupdatebatch.construct" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoUpdateBatch::__construct</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.5.0)</p><p class="refpurpose"><span class="refname">MongoUpdateBatch::__construct</span> &mdash; <span class="dc-title">Description</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoupdatebatch.construct-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoUpdateBatch::__construct</strong></span>(<span class="methodparam"><span class="type"><a href="class.mongocollection.html" class="type MongoCollection">MongoCollection</a></span> <code class="parameter">$collection</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$write_options</code><span class="initializer"> = ?</span></span>)</div>
+
+  <p class="para rdfs-comment">
+   Constructs a batch of UPDATE operations. See <a href="class.mongowritebatch.html" class="classname">MongoWriteBatch</a>.
+  </p>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoupdatebatch.construct-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+   
+    <dt>
+<code class="parameter">collection</code></dt>
+
+    <dd>
+<p class="para">The <a href="class.mongocollection.html" class="classname">MongoCollection</a> to execute the batch on. Its <a href="mongo.writeconcerns.html" class="link">write concern</a> will be copied and used as the default write concern if none is given as <code class="parameter">$write_options</code> or during <span class="methodname"><a href="mongowritebatch.execute.html" class="methodname">MongoWriteBatch::execute()</a></span>.</p></dd>
+
+   
+   
+    <dt>
+<code class="parameter">write_options</code></dt>
+
+    <dd>
+<p class="para">An array of Write Options.<table class="doctable informaltable"><thead><tr><th>key</th><th>value meaning</th></tr>
+</thead>
+<tbody class="tbody"><tr><td>w (int|string)</td><td><a href="mongo.writeconcerns.html" class="link">Write concern</a> value</td></tr>
+<tr><td>wtimeout (int)</td><td><a href="mongo.writeconcerns.html" class="link">Maximum time to wait for replication</a></td></tr>
+<tr><td>ordered</td><td>Determines if MongoDB must apply this batch in order. Ordered writes execute serially (i.e. one at a time) and execution will stop after the first error. Unordered writes may execute in parallel and execution will not stop after the first error. Defaults to <strong><code>true</code></strong></td></tr>
+<tr><td>j (bool)</td><td>Wait for journaling on the primary. This value is discouraged, use WriteConcern instead</td></tr>
+<tr><td>fsync (bool)</td><td>Wait for fsync on the primary. This value is discouraged, use WriteConcern instead</td></tr>
+</tbody></table>
+</p></dd>
+
+   
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoupdatebatch.construct-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   A new MongoUpdateBatch.
+  </p>
+ </div>
+
+
+
+</div></div></div></body></html>

@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Creates a new database</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodb.command.html">« MongoDB::command</a></li>
+      <li style="float: right;"><a href="mongodb.createcollection.html">MongoDB::createCollection »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodb.html">MongoDB</a></li>
+    <li>Creates a new database</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodb.construct" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDB::__construct</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoDB::__construct</span> &mdash; <span class="dc-title">Creates a new database</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodb.construct-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoDB::__construct</strong></span>(<span class="methodparam"><span class="type"><a href="class.mongoclient.html" class="type MongoClient">MongoClient</a></span> <code class="parameter">$conn</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>)</div>
+
+  <p class="para rdfs-comment">
+   This method is not meant to be called directly.  The preferred way to create
+   an instance of MongoDB is through <span class="function"><a href="mongoclient.get.html" class="function">MongoClient::__get()</a></span> or
+   <span class="function"><a href="mongoclient.selectdb.html" class="function">MongoClient::selectDB()</a></span>.
+  </p>
+  <p class="para">
+   If you&#039;re ignoring the previous paragraph and want to call it directly you
+   can do so:
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoDB</span><span style="color: #007700">(</span><span style="color: #0000BB">$m</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'mydbname'</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  <p class="para">
+   But don&#039;t.  Isn&#039;t this much nicer:
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">mydbname</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;or,&nbsp;if&nbsp;the&nbsp;name&nbsp;contains&nbsp;weird&nbsp;characters:<br /><br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">'my,db:name'</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodb.construct-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <span class="type"><a href="class.mongoclient.html" class="type MongoClient">MongoClient</a></span>
+      <code class="parameter">conn</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Database connection.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">name</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Database name.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodb.construct-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the database.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongodb.construct-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws default exception if the database name is invalid.
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

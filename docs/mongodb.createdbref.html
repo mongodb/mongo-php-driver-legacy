@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Creates a database reference</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodb.createcollection.html">« MongoDB::createCollection</a></li>
+      <li style="float: right;"><a href="mongodb.drop.html">MongoDB::drop »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodb.html">MongoDB</a></li>
+    <li>Creates a database reference</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodb.createdbref" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDB::createDBRef</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoDB::createDBRef</span> &mdash; <span class="dc-title">Creates a database reference</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodb.createdbref-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoDB::createDBRef</strong></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$collection</code></span>, <span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$document_or_id</code></span>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   This method is a flexible interface for creating database refrences (see
+   <a href="class.mongodbref.html" class="classname">MongoDBRef</a>).
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodb.createdbref-parameters">
+  <h3 class="title">Parameters</h3>    
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">collection</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The collection to which the database reference will point.
+      </p>
+     </dd>
+
+       
+    
+     <dt>
+
+      <code class="parameter">document_or_id</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       If an array or object is given, its <code class="literal">_id</code> field will be
+       used as the reference ID. If a <a href="class.mongoid.html" class="classname">MongoId</a> or scalar
+       is given, it will be used as the reference ID.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodb.createdbref-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns a database reference array.
+  </p>
+  <p class="para">
+   If an array without an <code class="literal">_id</code> field was provided as the
+   <code class="literal">document_or_id</code> parameter, <strong><code>null</code></strong> will be returned.
+  </p>
+ </div>
+
+ <div class="refsect1 examples" id="refsect1-mongodb.createdbref-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-70">
+   <p><strong>Example #1 <span class="function"><strong>MongoDB::createDBRef()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    Example demonstrating how to programatically create a DB reference array from
+    a document.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$articles&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">articles</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$article&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;</span><span style="color: #DD0000">'title'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'Test&nbsp;article'</span><span style="color: #007700">,<br />&nbsp;</span><span style="color: #DD0000">'description'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'Test&nbsp;article&nbsp;description'<br /></span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$articles</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$article</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$ref&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createDBRef</span><span style="color: #007700">(</span><span style="color: #DD0000">'articles'</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$article</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">print_r</span><span style="color: #007700">(</span><span style="color: #0000BB">$article</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">print_r</span><span style="color: #007700">(</span><span style="color: #0000BB">$ref</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+     <div class="cdata"><pre>
+     Array
+     (
+         [title] =&gt; Test article
+         [description] =&gt; Test article description
+         [_id] =&gt; MongoId Object
+             (
+             )
+
+     )
+     Array
+     (
+         [$ref] =&gt; articles
+         [$id] =&gt; MongoId Object
+             (
+             )
+
+     )
+     </pre></div>
+   </div>
+   <div class="example-contents"><p>
+     Now the $ref can be stored on another document and retrieved later with
+     <span class="methodname"><a href="mongodb.getdbref.html" class="methodname">MongoDB::getDBRef()</a></span> or <span class="methodname"><a href="mongocollection.getdbref.html" class="methodname">MongoCollection::getDBRef()</a></span>.
+   </p></div>
+  </div>
+  <div class="example" id="example-71">
+   <p><strong>Example #2 <span class="function"><strong>MongoDB::createDBRef()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    Example demonstrating how to programatically create a DB reference from just an id.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$id&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoId</span><span style="color: #007700">(</span><span style="color: #DD0000">'47cc67093475061e3d9536d2'</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$ref&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createDBRef</span><span style="color: #007700">(</span><span style="color: #DD0000">'articles'</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$id</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+</div></div></div></body></html>

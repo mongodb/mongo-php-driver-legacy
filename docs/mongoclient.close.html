@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Closes this connection</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongoclient.html">« MongoClient</a></li>
+      <li style="float: right;"><a href="mongoclient.connect.html">MongoClient::connect »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoclient.html">MongoClient</a></li>
+    <li>Closes this connection</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoclient.close" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoClient::close</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoClient::close</span> &mdash; <span class="dc-title">Closes this connection</span></p>
+
+ </div>
+
+ <div id="mongoclient.close-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension.</p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoclient.close-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoClient::close</strong></span>(<span class="methodparam"><span class="type"><span class="type">bool</span>|<span class="type">string</span></span> <code class="parameter">$connection</code><span class="initializer"> = ?</span></span>): <span class="type">bool</span></div>
+
+  <p class="para rdfs-comment">
+   The <span class="function"><strong>MongoClient::close()</strong></span> method forcefully closes a
+   connection to the database, even if persistent connections are being used.
+   You should <em class="emphasis">never</em> have to do this under normal
+   circumstances.
+  </p>
+  <p class="para">
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoclient.close-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">connection</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       If connection is not given, or <strong><code>false</code></strong> then connection that would be
+       selected for writes would be closed. In a single-node configuration,
+       that is then the whole connection, but if you are connected to a
+       replica set, close() will <em class="emphasis">only</em> close the
+       connection to the primary server.
+      </p>
+      <p class="para">
+       If connection is <strong><code>true</code></strong> then all connections as known by the connection
+       manager will be closed. This can include connections that are not
+       referenced in the connection string used to create the object that
+       you are calling close on.
+      </p>
+      <p class="para">
+       If connection is a string argument, then it will only close the
+       connection identified by this hash. Hashes are identifiers for a
+       connection and can be obtained by calling
+       <span class="function"><a href="mongoclient.getconnections.html" class="function">MongoClient::getConnections()</a></span>.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoclient.close-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns if the connection was successfully closed.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongoclient.close-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-49">
+   <p><strong>Example #1 <span class="function"><strong>MongoClient::close()</strong></span> example</strong></p>
+   <div class="example-contents"><p>This example demonstrates how to selectively close all connections
+   for secondaries only.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #FF8000">//&nbsp;Connect&nbsp;to&nbsp;a&nbsp;replicaset<br /></span><span style="color: #0000BB">$a&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://whisky:13000/?replicaset=seta"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$connections&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$a</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getConnections</span><span style="color: #007700">();<br /><br />foreach&nbsp;(&nbsp;</span><span style="color: #0000BB">$connections&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$con&nbsp;</span><span style="color: #007700">)<br />{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;Loop&nbsp;over&nbsp;all&nbsp;the&nbsp;connections,&nbsp;and&nbsp;when&nbsp;the&nbsp;type&nbsp;is&nbsp;"SECONDARY"<br />&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;we&nbsp;close&nbsp;the&nbsp;connection<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #007700">if&nbsp;(&nbsp;</span><span style="color: #0000BB">$con</span><span style="color: #007700">[</span><span style="color: #DD0000">'connection'</span><span style="color: #007700">][</span><span style="color: #DD0000">'connection_type_desc'</span><span style="color: #007700">]&nbsp;==&nbsp;</span><span style="color: #DD0000">"SECONDARY"&nbsp;</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #DD0000">"Closing&nbsp;'</span><span style="color: #007700">{</span><span style="color: #0000BB">$con</span><span style="color: #007700">[</span><span style="color: #DD0000">'hash'</span><span style="color: #007700">]}</span><span style="color: #DD0000">':&nbsp;"</span><span style="color: #007700">;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$closed&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$a</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">close</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">$con</span><span style="color: #007700">[</span><span style="color: #DD0000">'hash'</span><span style="color: #007700">]&nbsp;);<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #0000BB">$closed&nbsp;</span><span style="color: #007700">?&nbsp;</span><span style="color: #DD0000">"ok"&nbsp;</span><span style="color: #007700">:&nbsp;</span><span style="color: #DD0000">"failed"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br />&nbsp;&nbsp;&nbsp;&nbsp;}<br />}<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+Closing &#039;whisky:13001;X;4948&#039;: ok
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongoclient.close-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.3.0</td>
+       <td>
+        <p class="para">
+         The <code class="parameter">connection</code> parameter to this function was
+         added in 1.3.0. Before that, only the write connection would be
+         closed by this method.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.2.0</td>
+       <td>
+        <p class="para">
+         Before version 1.2.0 the driver would not use persistent connections
+         by default, and all connections would be closed as soon as a MongoDB
+         connection went out if scope. Since version 1.2.0 this is no longer
+         the case and it is a bad idea to call close as you might end up
+         overloading the server with connections under high load.
+        </p>
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongoclient.close-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="function"><a href="mongoclient.getconnections.html" class="function" rel="rdfs-seeAlso">MongoClient::getConnections()</a> - Return info about all open connections</span></li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Getting A Collection</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.tutorial.selectdb.html">« Getting a Database</a></li>
+      <li style="float: right;"><a href="mongo.tutorial.insert.html">Inserting a Document »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.tutorial.html">Tutorial</a></li>
+    <li>Getting A Collection</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.tutorial.collection" class="section">
+   <h2 class="title">Getting A Collection</h2>
+   <p class="para">
+    Getting a collection has the same syntax as getting a database:
+   </p>
+   <div class="example" id="mongo.tutorial.collection-example">
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$connection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$connection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">baz</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;select&nbsp;a&nbsp;collection:<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foobar</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;or,&nbsp;directly&nbsp;selecting&nbsp;a&nbsp;database&nbsp;and&nbsp;collection:<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$connection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">baz</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foobar</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+   </div>
+   <p class="para">
+    A collection is analogous to a table (if you are familiar with relational
+    databases).
+   </p>
+   <div class="section" id="mongo.tutorial.collection.seealso">
+    <h2 class="title">See Also</h2>
+    <p class="para">
+     The API documentation on the <a href="class.mongocollection.html" class="classname">MongoCollection</a> class
+     contains more information about collection objects.
+    </p>
+   </div>
+  </div></div></div></body></html>

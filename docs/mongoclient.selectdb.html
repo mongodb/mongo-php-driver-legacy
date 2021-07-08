@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Gets a database</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoclient.selectcollection.html">« MongoClient::selectCollection</a></li>
+      <li style="float: right;"><a href="mongoclient.setreadpreference.html">MongoClient::setReadPreference »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoclient.html">MongoClient</a></li>
+    <li>Gets a database</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoclient.selectdb" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoClient::selectDB</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoClient::selectDB</span> &mdash; <span class="dc-title">Gets a database</span></p>
+
+ </div>
+
+ <div id="mongoclient.selectdb-soft-deprecation-notice" class="soft-deprecation-notice">
+  <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension, but there is an
+alternative in the <a href="" class="link">PHP library</a>:</p>
+  <ul class="simplelist">
+   <li class="member"><a href="https://docs.mongodb.com/php-library/master/reference/method/MongoDBClient-selectDatabase/" class="link external">&raquo;&nbsp;MongoDB\Client::selectDatabase()</a></li>
+  </ul>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoclient.selectdb-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoClient::selectDB</strong></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>): <span class="type"><a href="class.mongodb.html" class="type MongoDB">MongoDB</a></span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoclient.selectdb-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">name</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The database name.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoclient.selectdb-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns a new database object.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongoclient.selectdb-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <strong class="classname">Exception</strong> if the database name is invalid.
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

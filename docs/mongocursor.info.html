@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Gets information about the cursor's creation and iteration</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.immortal.html">« MongoCursor::immortal</a></li>
+      <li style="float: right;"><a href="mongocursor.key.html">MongoCursor::key »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Gets information about the cursor's creation and iteration</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.info" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::info</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.0.5)</p><p class="refpurpose"><span class="refname">MongoCursor::info</span> &mdash; <span class="dc-title">Gets information about the cursor&#039;s creation and iteration</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.info-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::info</strong></span>(): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   This can be called before or after the cursor has started iterating.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.info-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.info-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns the namespace, batch size, limit, skip, flags, query, and projected
+   fields for this cursor. If the cursor has started iterating, additional
+   information about iteration and the connection will be included.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongocursor.info-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.1.0</td>
+       <td>
+        Added a number of other fields, including <code class="literal">id</code> (the 
+        cursor id), <code class="literal">at</code> (the driver&#039;s counter of which 
+        document is current), <code class="literal">numReturned</code> (the number 
+        returned by the server in the current batch), and 
+        <code class="literal">server</code> (which server the query was sent 
+        to—useful in conjunction with
+        <a href="mongo.readpreferences.html" class="xref">Read Preferences</a>.
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.0.10</td>
+       <td>
+        Added <code class="literal">started_iterating</code> field, a boolean indicating
+        if cursor is pre- or post-query.
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.info-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-149">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::info()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">test</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foo</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"x"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">4</span><span style="color: #007700">),&nbsp;array(</span><span style="color: #DD0000">"y"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">));<br /><br />echo&nbsp;</span><span style="color: #DD0000">"Before&nbsp;iteration&nbsp;started:\n"</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">info</span><span style="color: #007700">());<br /><br />echo&nbsp;</span><span style="color: #DD0000">"\nAfter&nbsp;iteration&nbsp;started:\n"</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">rewind</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">info</span><span style="color: #007700">());<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+Before iteration started:
+array(8) {
+  [&quot;ns&quot;]=&gt;
+  string(8) &quot;test.foo&quot;
+  [&quot;limit&quot;]=&gt;
+  int(0)
+  [&quot;batchSize&quot;]=&gt;
+  int(0)
+  [&quot;skip&quot;]=&gt;
+  int(0)
+  [&quot;flags&quot;]=&gt;
+  int(0)
+  [&quot;query&quot;]=&gt;
+  array(1) {
+    [&quot;x&quot;]=&gt;
+    int(4)
+  }
+  [&quot;fields&quot;]=&gt;
+  array(1) {
+    [&quot;y&quot;]=&gt;
+    int(0)
+  }
+  [&quot;started_iterating&quot;]=&gt;
+  bool(false)
+}
+
+After iteration started:
+array(15) {
+  [&quot;ns&quot;]=&gt;
+  string(8) &quot;test.foo&quot;
+  [&quot;limit&quot;]=&gt;
+  int(0)
+  [&quot;batchSize&quot;]=&gt;
+  int(0)
+  [&quot;skip&quot;]=&gt;
+  int(0)
+  [&quot;flags&quot;]=&gt;
+  int(0)
+  [&quot;query&quot;]=&gt;
+  array(1) {
+    [&quot;x&quot;]=&gt;
+    int(4)
+  }
+  [&quot;fields&quot;]=&gt;
+  array(1) {
+    [&quot;y&quot;]=&gt;
+    int(0)
+  }
+  [&quot;started_iterating&quot;]=&gt;
+  bool(true)
+  [&quot;id&quot;]=&gt;
+  int(0)
+  [&quot;at&quot;]=&gt;
+  int(0)
+  [&quot;numReturned&quot;]=&gt;
+  int(1)
+  [&quot;server&quot;]=&gt;
+  string(25) &quot;localhost:27017;-;.;26450&quot;
+  [&quot;host&quot;]=&gt;
+  string(9) &quot;localhost&quot;
+  [&quot;port&quot;]=&gt;
+  int(27017)
+  [&quot;connection_type_desc&quot;]=&gt;
+  string(10) &quot;STANDALONE&quot;
+}
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.info-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="methodname"><a href="mongocursorinterface.info.html" class="methodname" rel="rdfs-seeAlso">MongoCursorInterface::info()</a> - Gets information about the cursor's creation and iteration</span></li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Fetches the object pointed to by a reference</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodbref.create.html">« MongoDBRef::create</a></li>
+      <li style="float: right;"><a href="mongodbref.isref.html">MongoDBRef::isRef »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodbref.html">MongoDBRef</a></li>
+    <li>Fetches the object pointed to by a reference</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodbref.get" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDBRef::get</h1>
+  <p class="verinfo">(PECL mongo &gt;= 0.9.0)</p><p class="refpurpose"><span class="refname">MongoDBRef::get</span> &mdash; <span class="dc-title">Fetches the object pointed to by a reference</span></p>
+
+ </div>
+
+ <div id="mongodbref.get-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this class
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this class in the new extension.</p>
+   <p class="para">
+    The concept of database references, and hence this class, has been
+    deprecated.
+   </p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodbref.get-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><strong>MongoDBRef::get</strong></span>(<span class="methodparam"><span class="type"><a href="class.mongodb.html" class="type MongoDB">MongoDB</a></span> <code class="parameter">$db</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$ref</code></span>): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodbref.get-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">db</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Database to use.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">ref</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Reference to fetch.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodbref.get-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns the document to which the reference refers or <strong><code>null</code></strong> if the document
+   does not exist (the reference is broken).
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongodbref.get-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-182">
+   <p><strong>Example #1 <span class="function"><a href="mongocollection.createdbref.html" class="function">MongoCollection::createDBRef()</a></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;get&nbsp;$person&nbsp;out&nbsp;of&nbsp;the&nbsp;db<br /></span><span style="color: #0000BB">$person&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">findOne</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">//&nbsp;dereference&nbsp;the&nbsp;address<br /></span><span style="color: #0000BB">$address&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">MongoDBRef</span><span style="color: #007700">::</span><span style="color: #0000BB">get</span><span style="color: #007700">(</span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">db</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$person</span><span style="color: #007700">[</span><span style="color: #DD0000">'address'</span><span style="color: #007700">]);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongodbref.get-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><a href="mongodb.getdbref.html" class="methodname" rel="rdfs-seeAlso">MongoDB::getDBRef()</a> - Fetches the document pointed to by a database reference</span></li>
+    <li class="member"><span class="methodname"><a href="mongocollection.getdbref.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::getDBRef()</a> - Fetches the document pointed to by a database reference</span></li>
+   </ul>
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

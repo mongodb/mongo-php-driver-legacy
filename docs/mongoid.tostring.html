@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Returns a hexidecimal representation of this id</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoid.set-state.html">« MongoId::__set_state</a></li>
+      <li style="float: right;"><a href="class.mongocode.html">MongoCode »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoid.html">MongoId</a></li>
+    <li>Returns a hexidecimal representation of this id</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoid.tostring" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoId::__toString</h1>
+  <p class="verinfo">(PECL mongo &gt;= 0.8.0)</p><p class="refpurpose"><span class="refname">MongoId::__toString</span> &mdash; <span class="dc-title">Returns a hexidecimal representation of this id</span></p>
+
+ </div>
+
+ <div id="mongoid.tostring-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+Alternatives to this method include:</p>
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><strong>MongoDB\BSON\ObjectId::__toString()</strong></span></li>
+   </ul>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoid.tostring-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoId::__toString</strong></span>(): <span class="type">string</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoid.tostring-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoid.tostring-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   This id.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongoid.tostring-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-168">
+   <p><strong>Example #1 <span class="function"><strong>MongoId::__toString()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"foo"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"bar"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(&nbsp;</span><span style="color: #DD0000">"x"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"y"&nbsp;</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(&nbsp;</span><span style="color: #DD0000">"x"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"y"&nbsp;</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$r1&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">next</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$r2&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">next</span><span style="color: #007700">();<br /><br />echo&nbsp;</span><span style="color: #0000BB">$r1</span><span style="color: #007700">[</span><span style="color: #DD0000">"_id"</span><span style="color: #007700">]&nbsp;.&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br />echo&nbsp;</span><span style="color: #0000BB">$r2</span><span style="color: #007700">[</span><span style="color: #DD0000">"_id"</span><span style="color: #007700">]&nbsp;.&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+49a7011a05c677b9a916612a
+49a702d5450046d3d515d10d
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+</div></div></div></body></html>

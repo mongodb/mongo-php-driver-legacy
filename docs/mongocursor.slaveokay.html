@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sets whether this query can be done on a secondary [deprecated]</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.skip.html">« MongoCursor::skip</a></li>
+      <li style="float: right;"><a href="mongocursor.snapshot.html">MongoCursor::snapshot »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Sets whether this query can be done on a secondary [deprecated]</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.slaveokay" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::slaveOkay</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.4)</p><p class="refpurpose"><span class="refname">MongoCursor::slaveOkay</span> &mdash; <span class="dc-title">Sets whether this query can be done on a secondary [deprecated]</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.slaveokay-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::slaveOkay</strong></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$okay</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="para">
+    This method is deprecated since version 1.5.0. Instead, please use
+    <span class="methodname"><a href="mongocursor.setreadpreference.html" class="methodname">MongoCursor::setReadPreference()</a></span> and <a href="mongo.readpreferences.html" class="xref">Read Preferences</a>.
+   </p>
+  </div>
+  <p class="para">
+   Calling this will make the driver route reads to secondaries if:
+   <ul class="itemizedlist">
+    <li class="listitem">
+     <span class="simpara">
+      You are using a replica set, and
+     </span>
+    </li>
+    <li class="listitem">
+     <span class="simpara">
+      You created a <a href="class.mongoclient.html" class="classname">MongoClient</a> instance using the option
+      <code class="literal">&quot;replicaSet&quot; =&gt; &quot;setName&quot;</code>, and
+     </span>
+    </li>
+    <li class="listitem">
+     <span class="simpara">
+      There is a healthy secondary that can be reached by the driver.
+     </span>
+    </li>
+   </ul>
+   You can check which server was used for this query by calling 
+   <span class="function"><a href="mongocursor.info.html" class="function">MongoCursor::info()</a></span> after running the query.  It&#039;s
+   <code class="literal">server</code> field will show which server the query was sent to.
+  </p>
+  <p class="para">
+   Note that you should use this function even if you do not use the automatic
+   routing to secondaries. If you connect directly to a secondary in a replica
+   set, you still need to call this function, which basically tells the database
+   that you are aware that you might be getting older data and you&#039;re okay with
+   that. If you do not call this, you&#039;ll get &quot;not master&quot; errors when you try to
+   query.
+  </p>
+  <p class="para">
+   This method will override the static class variable 
+   <var class="varname">MongoCursor::$slaveOkay</var>.  It will also override 
+   <span class="function"><a href="mongo.setslaveokay.html" class="function">Mongo::setSlaveOkay()</a></span>, 
+   <span class="function"><a href="mongodb.setslaveokay.html" class="function">MongoDB::setSlaveOkay()</a></span> and
+   <span class="function"><a href="mongocollection.setslaveokay.html" class="function">MongoCollection::setSlaveOkay()</a></span>.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.slaveokay-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">okay</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       If it is okay to query the secondary.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+ 
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.slaveokay-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns this cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.slaveokay-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if this cursor has started iterating.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.slaveokay-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-153">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::slaveOkay()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />MongoCursor</span><span style="color: #007700">::</span><span style="color: #0000BB">$slaveOkay&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;cannot&nbsp;query&nbsp;secondary<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">//&nbsp;can&nbsp;query&nbsp;secondary<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">()-&gt;</span><span style="color: #0000BB">slaveOkay</span><span style="color: #007700">();<br /><br /></span><span style="color: #0000BB">MongoCursor</span><span style="color: #007700">::</span><span style="color: #0000BB">$slaveOkay&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;can&nbsp;query&nbsp;secondary<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">//&nbsp;cannot&nbsp;query&nbsp;secondary<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">()-&gt;</span><span style="color: #0000BB">slaveOkay</span><span style="color: #007700">(</span><span style="color: #0000BB">false</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.slaveokay-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><a href="mongo.readpreferences.html" class="xref">Read Preferences</a></li>
+   <li class="member"><span class="methodname"><a href="mongocursor.setreadpreference.html" class="methodname" rel="rdfs-seeAlso">MongoCursor::setReadPreference()</a> - Set the read preference for this query</span></li>
+   <li class="member"><span class="methodname"><a href="mongocursor.getreadpreference.html" class="methodname" rel="rdfs-seeAlso">MongoCursor::getReadPreference()</a> - Get the read preference for this query</span></li>
+  </ul>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongocursor.slaveokay-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.5.0</td>
+       <td>
+        This method has been deprecated in favour of
+        <span class="methodname"><a href="mongocursor.setreadpreference.html" class="methodname">MongoCursor::setReadPreference()</a></span> and <a href="mongo.readpreferences.html" class="xref">Read Preferences</a>.
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Limits the number of elements returned in one batch</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.awaitdata.html">« MongoCursor::awaitData</a></li>
+      <li style="float: right;"><a href="mongocursor.construct.html">MongoCursor::__construct »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Limits the number of elements returned in one batch</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.batchsize" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::batchSize</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.0.11)</p><p class="refpurpose"><span class="refname">MongoCursor::batchSize</span> &mdash; <span class="dc-title">Limits the number of elements returned in one batch</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.batchsize-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::batchSize</strong></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$batchSize</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+  <p class="para rdfs-comment">
+   A cursor typically fetches a batch of result objects and store them
+   locally. This method sets the batchSize value to configure the amount of
+   documents retrieved from the server in one round trip. However, it will
+   never return more documents than fit in the max batch size limit (usually
+   4MB).  
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.batchsize-parameters">
+  <h3 class="title">Parameters</h3>  
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">batchSize</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The number of results to return per batch. Each batch requires a
+       round-trip to the server. 
+      </p>
+      <p class="para">
+       If <code class="parameter">batchSize</code> is <em class="emphasis">2 or
+       more</em>, it represents the size of each batch of objects retrieved.
+       It can be adjusted to optimize performance and limit data transfer.
+      </p>
+      <p class="para">
+       If <code class="parameter">batchSize</code> is <code class="literal">1</code> or negative, it
+       will limit of number returned documents to the absolute value of batchSize,
+       and the cursor will be closed. For example if
+       batchSize is <code class="literal">-10</code>, then the server will return a maximum
+       of 10 documents and as many as can fit in 4MB, then close the cursor.
+      </p>
+      <div class="warning"><strong class="warning">Warning</strong>
+       <p class="para">
+        A <code class="parameter">batchSize</code> of <code class="literal">1</code> is special, and
+        means the same as <code class="literal">-1</code>, i.e. a value of
+        <code class="literal">1</code> makes the cursor only capable of returning
+        <em class="emphasis">one</em> document.
+       </p>
+      </div>
+      <p class="para">
+       Note that this feature is different from
+       <span class="function"><a href="mongocursor.limit.html" class="function">MongoCursor::limit()</a></span> in that documents must fit within a
+       maximum size, and it removes the need to send a request to close the cursor
+       server-side. The batch size can be changed even after a cursor is iterated,
+       in which case the setting will apply on the next batch retrieval. 
+      </p>
+      <p class="para">
+       This cannot override MongoDB&#039;s limit on the amount of data it will return to 
+       the client (i.e., if you set batch size to 1,000,000,000, MongoDB will still 
+       only return 4-16MB of results per batch). 
+      </p>
+      <p class="para">
+       To ensure consistent behavior, the rules of
+       <span class="function"><strong>MongoCursor::batchSize()</strong></span> and
+       <span class="function"><a href="mongocursor.limit.html" class="function">MongoCursor::limit()</a></span> behave a 
+       little complex but work &quot;as expected&quot;.  The rules are: hard limits override 
+       soft limits with preference given to <span class="function"><a href="mongocursor.limit.html" class="function">MongoCursor::limit()</a></span>
+       over <span class="function"><strong>MongoCursor::batchSize()</strong></span>.  After that, whichever is 
+       set and lower than the other will take precedence. See below.
+       section for some examples.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.batchsize-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns this cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.batchsize-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-144">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::batchSize()</strong></span> and combinations with
+   <span class="function"><a href="mongocursor.limit.html" class="function">MongoCursor::limit()</a></span></strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;one&nbsp;batch,&nbsp;at&nbsp;most&nbsp;10&nbsp;items.&nbsp;The&nbsp;-10&nbsp;makes&nbsp;the&nbsp;server&nbsp;to&nbsp;return&nbsp;10&nbsp;items,<br />//&nbsp;and&nbsp;then&nbsp;remove&nbsp;the&nbsp;cursor.<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">20</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">batchSize</span><span style="color: #007700">(-</span><span style="color: #0000BB">10</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;first&nbsp;batch:&nbsp;at&nbsp;most&nbsp;10&nbsp;items<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">10</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;first&nbsp;batch:&nbsp;at&nbsp;most&nbsp;10&nbsp;items<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">10</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">batchSize</span><span style="color: #007700">(</span><span style="color: #0000BB">20</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;results&nbsp;are&nbsp;fetched&nbsp;in&nbsp;batches&nbsp;of&nbsp;10&nbsp;each,&nbsp;with&nbsp;a&nbsp;maximum&nbsp;of&nbsp;20&nbsp;items<br />//&nbsp;returned&nbsp;(that&nbsp;means&nbsp;two&nbsp;batches&nbsp;of&nbsp;10).<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">20</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">batchSize</span><span style="color: #007700">(</span><span style="color: #0000BB">10</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;results&nbsp;are&nbsp;fetched&nbsp;in&nbsp;batches&nbsp;of&nbsp;7&nbsp;each,&nbsp;with&nbsp;a&nbsp;maximum&nbsp;of&nbsp;30&nbsp;items<br />//&nbsp;returned&nbsp;(that&nbsp;means&nbsp;that&nbsp;the&nbsp;driver&nbsp;requests&nbsp;4&nbsp;batches&nbsp;of&nbsp;7,&nbsp;and&nbsp;one&nbsp;batch<br />//&nbsp;of&nbsp;2).<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">30</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">batchSize</span><span style="color: #007700">(</span><span style="color: #0000BB">7</span><span style="color: #007700">)<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.batchsize-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   MongoDB core docs on <a href="https://docs.mongodb.com/manual/reference/method/cursor.batchSize/" class="link external">&raquo;&nbsp;batchSize</a>.
+  </p>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="function"><a href="mongocursor.limit.html" class="function" rel="rdfs-seeAlso">MongoCursor::limit()</a> - Limits the number of results returned</span></li>
+    <li class="member"><span class="methodname"><a href="mongocursorinterface.batchsize.html" class="methodname" rel="rdfs-seeAlso">MongoCursorInterface::batchSize()</a> - Limits the number of elements returned in one batch</span></li>
+   </ul>
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongocursor.batchsize-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.4.5</td>
+       <td>
+        <p class="para">
+         Before 1.4.5, this method would throw an
+         <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if the cursor had already
+         started iterating.
+        </p>
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

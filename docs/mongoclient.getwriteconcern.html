@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Get the write concern for this connection</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoclient.getreadpreference.html">« MongoClient::getReadPreference</a></li>
+      <li style="float: right;"><a href="mongoclient.killcursor.html">MongoClient::killCursor »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoclient.html">MongoClient</a></li>
+    <li>Get the write concern for this connection</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoclient.getwriteconcern" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoClient::getWriteConcern</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.5.0)</p><p class="refpurpose"><span class="refname">MongoClient::getWriteConcern</span> &mdash; <span class="dc-title">Get the write concern for this connection</span></p>
+
+ </div>
+
+ <div id="mongoclient.getwriteconcern-soft-deprecation-notice" class="soft-deprecation-notice">
+  <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension.</p>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoclient.getwriteconcern-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoClient::getWriteConcern</strong></span>(): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoclient.getwriteconcern-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoclient.getwriteconcern-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">This function returns an array describing the write concern. The array contains the values <code class="literal">w</code> for an integer acknowledgement level or string mode, and <code class="literal">wtimeout</code> denoting the maximum number of milliseconds to wait for the server to satisfy the write concern.</p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongoclient.getwriteconcern-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-58">
+   <p><strong>Example #1 <span class="methodname"><strong>MongoClient::getWriteConcern()</strong></span> return value example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$mc&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">'mongodb://localhost:27017'</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">'wTimeoutMS'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">500</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getWriteConcern</span><span style="color: #007700">());<br /><br /></span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setWriteConcern</span><span style="color: #007700">(</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">1000</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getWriteConcern</span><span style="color: #007700">());<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;w&quot;]=&gt;
+  int(1)
+  [&quot;wtimeout&quot;]=&gt;
+  int(500)
+}
+array(2) {
+  [&quot;w&quot;]=&gt;
+  int(1)
+  [&quot;wtimeout&quot;]=&gt;
+  int(1000)
+}
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongoclient.getwriteconcern-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">The <a href="mongo.writeconcerns.html" class="link">write concern</a> documentation.</li>
+   <li class="member"><span class="function"><a href="mongoclient.setwriteconcern.html" class="function" rel="rdfs-seeAlso">MongoClient::setWriteConcern()</a> - Set the write concern for this connection</span></li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

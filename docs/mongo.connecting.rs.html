@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Replica Sets</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.connecting.auth.html">« Authentication</a></li>
+      <li style="float: right;"><a href="mongo.connecting.mongos.html">Sharding »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.connecting.html">Connecting</a></li>
+    <li>Replica Sets</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.connecting.rs" class="section">
+  <h2 class="title">Replica Sets</h2>
+  <p class="para">
+   To connect to a replica set, specify one or more members of the set and use
+   the <code class="literal">&quot;replicaSet&quot;</code> option. Multiple servers may be delimited
+   by a comma.
+  </p>
+  <div class="example" id="mongo.connecting.rs-example">
+   <p><strong>Example #1 ReplicaSet seed list</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #FF8000">//&nbsp;Using&nbsp;multiple&nbsp;servers&nbsp;as&nbsp;the&nbsp;seed&nbsp;list&nbsp;(preferred)<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://rs1.example.com:27017,rs2.example.com:27017/?replicaSet=myReplSetName"</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;Using&nbsp;one&nbsp;server&nbsp;as&nbsp;the&nbsp;seed&nbsp;list<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://rs1.example.com:27017"</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"replicaSet"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"myReplSetName"</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Using&nbsp;multiple&nbsp;servers&nbsp;as&nbsp;the&nbsp;seed&nbsp;list<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://rs1.example.com:27017,rs2.example.com:27017"</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"replicaSet"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"myReplSetName"</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <p class="para">
+   The PHP driver will query the database server(s) listed to determine the
+   primary. So long as it can connect to at least one host listed and find a
+   primary, the connection will succeed. If it cannot make a connection to any
+   servers listed or cannot find a primary, a
+   <a href="class.mongoconnectionexception.html" class="classname">MongoConnectionException</a> will be thrown.
+  </p>
+  <div class="tip"><strong class="tip">Tip</strong>
+   <p class="para">
+    You should always provide a seed list with more than one member of the
+    ReplicaSet. For highest availability you should seed with at least one
+    server from each of your datacenters.
+   </p>
+  </div>
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="para">
+    The host names that you specify in the seed list <em class="emphasis">must</em>
+    match the host names in the replica set configuration. This is because the
+    driver only uses the host names in the replica set configuration to create
+    the hash for its persistent connections.
+   </p>
+   <p class="para">
+    For example, if an IP address is used in the seed list and the replica set
+    is configured with host names, the driver will discard any seed list
+    connection(s) that differ from the canonical host names reported by the
+    replica set. Effectively, these non-canonical seed list connections will be
+    recreated on each request, greatly reducing the benefit of using persistent
+    connections.
+   </p>
+  </div>
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="para">
+    The driver does <em class="emphasis">not</em> support connecting to different
+    replica sets with the same name. This extends beyond one script so make
+    sure to have separate names for each of your replica sets. That also means
+    that you can <em class="emphasis">not</em> do this:
+   </p>
+   <div class="example" id="mongo.connecting.rs-example-wrong-replset">
+    <p><strong>Example #2 Wrong replica set name duplication</strong></p>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://devserver1,devserver2,devserver3/?replicaSet=repset"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://prodserver1,prodserver2,prodserver3/?replicaSet=repset"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+   </div>
+   <p class="para">
+    Instead, you need to have two different names for your replica sets:
+   </p>
+   <div class="example" id="mongo.connecting.rs-example-correct-replset">
+    <p><strong>Example #3 Correct use of two replica set names</strong></p>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://devserver1,devserver2,devserver3/?replicaSet=devset"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://prodserver1,prodserver2,prodserver3/?replicaSet=prodset"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+   </div>
+  </div>
+  <p class="para">
+   If the primary becomes unavailable, an election will take place and a
+   secondary will be promoted to the role of primary (unless a majority vote
+   cannot be established). During this time
+   (<a href="https://docs.mongodb.com/manual/faq/replica-sets/#how-long-does-replica-set-failover-take" class="link external">&raquo;&nbsp;20-60 seconds</a>), the
+   connection will not be able to perform any write operations and attempts to
+   do so will result in an exception. Connections to secondaries will still be
+   able to perform reads.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    The default <a href="mongo.readpreferences.html" class="link">Read Preference</a>
+    is to only read from the primary. During the election process there is no
+    primary, and all read will therefore fail.
+   </p>
+   <p class="para">
+    It is recommended to use
+    <strong><code>MongoClient::RP_PRIMARY_PREFERRED</code></strong> Read Preference for
+    applications that require high availability for reads, as reads will only
+    be executed on the secondaries when there simply isn&#039;t a primary
+    available.
+   </p>
+  </p></blockquote>
+  <p class="para">
+   Once a primary is elected, attempting to perform a read or write will allow
+   the driver to detect the new primary. The driver will make this its primary
+   database connection and continue operating normally.
+  </p>
+  <p class="para">
+   The health and state of a secondary is checked every 5 seconds
+   (configurable with
+   <a href="mongo.configuration.html#ini.mongo.ping-interval" class="link">mongo.ping_interval</a>)
+   or when the next operation occurs after 5 seconds.  It will also recheck
+   the configuration when the driver has a problem reaching a server.
+  </p>
+  <p class="para">
+   Replica set failovers are checked every 60 seconds (configurable with
+   <a href="mongo.configuration.html#ini.mongo.is-master-interval" class="link">mongo.is_master_interval</a>),
+   and whenever a write operation fails when using acknowledged writes.
+  </p>
+
+  <div class="caution"><strong class="caution">Caution</strong>
+   <p class="para">
+    Secondaries may be behind the primary in operations, so
+    your application must be able to handle out-of-date data when using
+    Read Preferences other then <strong><code>MongoClient::RP_PRIMARY</code></strong>.
+   </p>
+  </div>
+
+  <p class="para">
+   For more information on replica sets, see the
+   <a href="https://docs.mongodb.com/manual/replication/" class="link external">&raquo;&nbsp;core documentation</a>.
+  </p>
+
+  <div class="simplesect">
+   <h3 class="title">See Also</h3>
+   <ul class="simplelist">
+    <li class="member"><a href="mongo.readpreferences.html" class="xref">Read Preferences</a></li>
+    <li class="member"><a href="mongo.writeconcerns.html" class="xref">Write Concerns</a></li>
+   </ul>
+  </div>
+
+  <div class="simplesect">
+   <h3 class="title">Changelog</h3>
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>1.0.9</td>
+       <td>
+        Added support for connecting to ReplicaSet and automatic failover.
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </div>
+
+ </div></div></div></body></html>

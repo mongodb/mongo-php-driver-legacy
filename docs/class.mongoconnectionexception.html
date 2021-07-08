@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoConnectionException class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongocursortimeoutexception.html">« MongoCursorTimeoutException</a></li>
+      <li style="float: right;"><a href="class.mongogridfsexception.html">MongoGridFSException »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.exceptions.html">Exceptions</a></li>
+    <li>The MongoConnectionException class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongoconnectionexception" class="reference">
+
+ <h1 class="title">The MongoConnectionException class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;= 1.0.0)</p>
+
+  
+  <div class="section" id="mongoconnectionexception.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    Thrown when the driver fails to connect to the database.
+   </p>
+
+   <p class="para">
+    There are a number of possible error messages to help you diagnose the 
+    connection problem.  These are:
+   </p>
+
+   <ul class="itemizedlist">
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">No candidate servers found</code>
+     </p>
+     <p class="para">
+     Thrown when the driver cannot establish a connection to MongoDB
+     (fulfilling the ReadPreferences, if specified).
+     </p>
+    </li>
+
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">No server name given.</code>
+     </p>
+     <p class="para">
+      This error occurs if you pass in &quot;&quot; as the server name, 
+      probably because of an typo with string interpolation, 
+      e.g., &quot;$servr&quot; instead of &quot;$server&quot;.
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">
+       failed to get host [hostname] or port [portnum] 
+       from [server].
+      </code>
+     </p>
+     <p class="para">
+       This indicated that the server string was malformed.  
+       &quot;[hostname]&quot; and &quot;[portnum]&quot; will be as much as the 
+       driver could dicipher of it.
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">Operation in progress</code>
+     </p>
+     <p class="para">
+      Connecting to the database timed out.
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">Transport endpoint is not connected</code>
+     </p>
+     <p class="para">
+      Generally means that the connection string isn&#039;t correct, the driver
+      couldn&#039;t even find the database server.
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">couldn&#039;t determine master</code>
+     </p>
+     <p class="para">
+      No server in a replica set connection was identified as the primary.
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">couldn&#039;t get host info for [server]</code>
+     </p>
+     <p class="para">
+      This indicated that DNS could not resolve the server address 
+      you gave.  This could easily be caused by a typo, for example, 
+      &quot;server&quot; instead of &quot;$server&quot;.
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">Invalid Argument</code>
+     </p>
+     <p class="para">
+      This can be caused by attempting to connect to a machine that is up but
+      that the database isn&#039;t actually running on.  Make sure that you&#039;ve
+      started the database server before connecting.      
+     </p>
+    </li>
+    <li class="listitem">
+     <p class="para">
+      <code class="literal">Permission denied</code>
+     </p>
+     <p class="para">
+      This means that the socket could not be opened due to permissions issues.
+      On Red Hat variants, this can be caused by a default setting that does not
+      allow Apache to create network connections.  You can override this setting
+      by running:
+      <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ /usr/sbin/setsebool -P httpd_can_network_connect 1</pre>
+</div>
+      </div>
+
+      then restarting Apache.
+     </p>
+    </li>
+   </ul>
+
+   <p class="para">  
+    If the error message is not listed above, it is probably an error 
+    from the C socket, and you can search the web for its usual cause.
+   </p>
+  </div>
+  
+
+  <div class="section" id="mongoconnectionexception.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+   
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+    
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoConnectionException</strong>
+     </span>
+     <span class="ooclass">
+      <span class="modifier">extends</span>
+      <a href="class.mongoexception.html" class="classname">MongoException</a>
+     </span>
+     {</div>
+    
+    
+   }</div>
+   
+
+  </div>
+
+ </div>
+
+</div>
+</div></div></body></html>

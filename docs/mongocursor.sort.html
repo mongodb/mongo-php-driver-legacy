@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sorts the results by given fields</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.snapshot.html">« MongoCursor::snapshot</a></li>
+      <li style="float: right;"><a href="mongocursor.tailable.html">MongoCursor::tailable »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Sorts the results by given fields</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.sort" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::sort</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoCursor::sort</span> &mdash; <span class="dc-title">Sorts the results by given fields</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.sort-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::sort</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$fields</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.sort-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">fields</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       An array of fields by which to sort. Each element in the array has as
+       key the field name, and as value either <code class="literal">1</code> for
+       ascending sort, or <code class="literal">-1</code> for descending sort.
+      </p>
+      <p class="para">
+       Each result is first sorted on the first field in the array, then (if
+       it exists) on the second field in the array, etc. This means that the
+       order of the fields in the <code class="parameter">fields</code> array is
+       important. See also the examples section.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+ 
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.sort-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns the same cursor that this method was called on.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.sort-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if this cursor has started iterating.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.sort-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-154">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::sort()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #FF8000">//&nbsp;Sort&nbsp;on&nbsp;field&nbsp;x,&nbsp;ascending<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">sort</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'x'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;The&nbsp;order&nbsp;in&nbsp;the&nbsp;associative&nbsp;array&nbsp;is&nbsp;important.&nbsp;For&nbsp;instance,&nbsp;these&nbsp;two<br />//&nbsp;examples&nbsp;will&nbsp;yield&nbsp;different&nbsp;results:<br /><br />//&nbsp;Sort&nbsp;on&nbsp;date&nbsp;ascending&nbsp;and&nbsp;age&nbsp;descending<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">sort</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'date'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'age'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Sort&nbsp;on&nbsp;age&nbsp;descending&nbsp;and&nbsp;date&nbsp;ascending<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">sort</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'age'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'date'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+</div></div></div></body></html>

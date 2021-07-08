@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Get the read preference for this query</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursorinterface.dead.html">« MongoCursorInterface::dead</a></li>
+      <li style="float: right;"><a href="mongocursorinterface.info.html">MongoCursorInterface::info »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursorinterface.html">MongoCursorInterface</a></li>
+    <li>Get the read preference for this query</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursorinterface.getreadpreference" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursorInterface::getReadPreference</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.6.0)</p><p class="refpurpose"><span class="refname">MongoCursorInterface::getReadPreference</span> &mdash; <span class="dc-title">Get the read preference for this query</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursorinterface.getreadpreference-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><strong>MongoCursorInterface::getReadPreference</strong></span>(): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursorinterface.getreadpreference-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursorinterface.getreadpreference-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">This function returns an array describing the read preference. The array contains the values <code class="literal">type</code> for the string read preference mode (corresponding to the <a href="class.mongoclient.html" class="classname">MongoClient</a> constants), and <code class="literal">tagsets</code> containing a list of all tag set criteria. If no tag sets were specified, <code class="literal">tagsets</code> will not be present in the array.</p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursorinterface.getreadpreference-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">The <a href="mongo.readpreferences.html" class="link">read preferences</a> documentation.</li>
+   <li class="member"><span class="function"><a href="mongocursorinterface.setreadpreference.html" class="function" rel="rdfs-seeAlso">MongoCursorInterface::setReadPreference()</a> - Set the read preference for this query</span></li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

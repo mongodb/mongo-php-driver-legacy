@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Installation</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.requirements.html">« Requirements</a></li>
+      <li style="float: right;"><a href="mongo.configuration.html">Runtime Configuration »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.setup.html">Installing/Configuring</a></li>
+    <li>Installation</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.installation" class="section">
+ <h2 class="title">Installation</h2>
+
+ <div class="warning"><strong class="warning">Warning</strong>
+  <p class="para">This extension is deprecated. Instead,
+the <a href="" class="link">MongoDB</a> extension should be
+used.</p>
+ </div>
+
+ <p class="para">
+  The MongoDB PHP driver should work on nearly any system: Windows, macOS, 
+  Unix, and Linux; little- and big-endian machines; 32- and 64-bit machines; PHP
+  5.3 through 5.6 (versions prior to 1.6 also support PHP 5.2).
+ </p>
+ <p class="para">
+  This <a href="https://pecl.php.net/" class="link external">&raquo;&nbsp;PECL</a> extension
+is not bundled with PHP.
+ </p>
+
+ <ul class="simplelist">
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.manual" class="xref">Manual Installation</a>
+  </li>
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.nix" class="xref">Installing on *NIX</a>
+  </li>
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.windows" class="xref">Installing on Windows</a>
+  </li>
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.osx" class="xref">macOS</a>
+  </li>
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.gentoo" class="xref">Gentoo</a>
+  </li>
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.fedora" class="xref">Red Hat</a>
+  </li>
+  <li class="member">
+   <a href="mongo.installation.html#mongo.installation.thirdparty" class="xref">Third-Party Installation Instructions</a>
+  </li>
+ </ul>
+
+ <div class="section" id="mongo.installation.manual">
+  <h2 class="title">Manual Installation</h2>
+
+  <p class="para">For driver developers and people interested in the latest bugfixes, you 
+   can compile the driver from the latest source code on 
+   <a href="https://github.com/mongodb/mongo-php-driver-legacy" class="link external">&raquo;&nbsp;Github</a>.
+   Go to Github and click the &quot;download&quot; button.  Then run:
+
+   <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ tar zxvf mongo-php-driver-legacy-&lt;commit_id&gt;.tar.gz
+$ cd mongo-php-driver-legacy-&lt;commit_id&gt;
+$ phpize
+$ ./configure
+$ make all
+$ sudo make install</pre>
+</div>
+   </div>
+
+  </p>
+
+  <p class="para">
+   Make the following changes to <var class="filename">php.ini</var>:
+  </p>
+  <ul class="itemizedlist">
+   <li class="listitem">
+    <p class="para">
+     Make sure the <em class="emphasis">extension_dir</em> variable is pointing to 
+     the directory containing <em class="emphasis">mongo.so</em>. The build will display where 
+     it is installing the PHP driver with output that looks something like:
+     <div class="example-contents">
+<div class="txtcode"><pre class="txtcode">Installing &#039;/usr/lib/php/extensions/no-debug-non-zts-20060613/mongo.so&#039;</pre>
+</div>
+     </div>
+
+
+      Make sure that it is the same as the PHP extension directory by running:
+
+     <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ php -i | grep extension_dir
+  extension_dir =&gt; /usr/lib/php/extensions/no-debug-non-zts-20060613 =&gt;
+                   /usr/lib/php/extensions/no-debug-non-zts-20060613</pre>
+</div>
+     </div>
+
+
+     If it&#039;s not, change the <em class="emphasis">extension_dir</em> in <var class="filename">php.ini</var> or 
+     move <em class="emphasis">mongo.so</em>.
+    </p>
+   </li>
+   <li class="listitem">
+    <p class="para">
+     To load the extension on PHP startup, add a line:
+
+     <div class="example-contents">
+<div class="inicode"><pre class="inicode">extension=mongo.so</pre>
+</div>
+     </div>
+
+
+    </p>
+   </li>
+  </ul>
+ </div>
+
+ <div class="section" id="mongo.installation.nix">
+  <h2 class="title">Installing on *NIX</h2>
+
+  <p class="para">
+   Run:
+   <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ sudo pecl install mongo</pre>
+</div>
+   </div>
+
+  </p>
+
+  <p class="para">
+   Add the following line to your <var class="filename">php.ini</var> file:
+   <div class="example-contents">
+<div class="inicode"><pre class="inicode">extension=mongo.so</pre>
+</div>
+   </div>
+
+  </p>
+
+  <p class="para">
+   If pecl runs out of memory while installing, make sure memory_limit in 
+   <var class="filename">php.ini</var> is set to at least 128MB.
+  </p>
+ </div>
+
+ <div class="section" id="mongo.installation.windows">
+  <h2 class="title">Installing on Windows</h2>
+
+  <p class="para">
+   Precompiled binaries for each release are available from 
+   <a href="https://pecl.php.net/package/mongo" class="link external">&raquo;&nbsp;PECL</a> for a variety
+   of combinations of versions, thread safety, and VC libraries. Unzip the 
+   archive and put php_mongo.dll in your PHP extension directory (&quot;ext&quot; by 
+   default).
+  </p>
+
+  <p class="para">
+   Add the following line to your <var class="filename">php.ini</var> file:
+   <div class="example-contents">
+<div class="inicode"><pre class="inicode">extension=php_mongo.dll</pre>
+</div>
+   </div>
+
+  </p>
+
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <strong>Additional DLL dependencies for Windows Users</strong><br />
+   <p class="para">
+    In order for this extension to work, there are
+<acronym title="Dynamic Link Library">DLL</acronym> files that must be available to the Windows
+system <var class="envar">PATH</var>. For information on how to do this, see the
+<acronym title="Frequently Asked Questions">FAQ</acronym> entitled &quot;<a href="" class="link">How do I add my PHP directory to the PATH
+on Windows</a>&quot;. Although copying DLL
+files from the PHP folder into the Windows system directory also works
+(because the system directory is by default in the system&#039;s
+<var class="envar">PATH</var>), this is not recommended.
+<em class="emphasis">This extension requires the following files to be in the
+<var class="envar">PATH</var>:</em> 
+    <var class="filename">libsasl.dll</var>
+   </p>
+  </p></blockquote>
+ </div>
+
+ <div class="section" id="mongo.installation.osx">
+  <h2 class="title">macOS</h2>
+
+  <p class="para">
+   In most cases installing from PECL is the easiest way:
+   <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ sudo pecl install mongo</pre>
+</div>
+   </div>
+
+  </p>
+
+  <p class="para">
+   If your system has multiple version of PHP installed (e.g. macOS default,
+   Homebrew, <a href="https://www.apachefriends.org/" class="link external">&raquo;&nbsp;XAMPP</a>), note that each
+   version of PHP has its own <a href="" class="link">pecl</a>
+   command and <var class="filename">php.ini</var> file.
+  </p>
+
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <strong>Xcode dependency for compiling on macOS</strong><br />
+   <p class="para">
+    Compiling the driver on macOS will require Xcode developer tools, which may
+    be installed with <code class="code">xcode-select --install</code>. If that command is
+    not available, you may first need to install the
+    <a href="https://developer.apple.com/downloads/index.action?name=Command%20Line%20Tools" class="link external">&raquo;&nbsp;Command Line Tools</a> package.
+   </p>
+  </p></blockquote>
+ </div>
+
+ <div class="section" id="mongo.installation.gentoo">
+  <h2 class="title">Gentoo</h2>
+
+  <p class="para">
+   Gentoo has a package for the PHP PECL driver called dev-php/pecl-mongo, which can be 
+   installed with:
+  </p>
+
+  <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ sudo emerge -va dev-php/pecl-mongo</pre>
+</div>
+  </div>
+
+
+  <p class="para">
+   If you use PECL, you may get an error that libtool is the wrong version. 
+   Compiling from source you&#039;ll need to run aclocal and autoconf.
+  </p>
+
+  <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ phpize
+$ aclocal 
+$ autoconf 
+$ ./configure
+$ make
+$ sudo make install</pre>
+</div>
+  </div>
+
+ </div>
+
+ <div class="section" id="mongo.installation.fedora">
+  <h2 class="title">Red Hat</h2>
+
+  <p class="para">
+   This includes Fedora and CentOS.
+  </p>
+
+  <p class="para">
+   The default Apache settings on these systems do not let requests make 
+   network connections, meaning that the driver will get &quot;Permission denied&quot;
+   errors when it tries to connect to the database.  If you run into this, try
+   running:
+   <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">$ /usr/sbin/setsebool -P httpd_can_network_connect 1</pre>
+</div>
+   </div>
+
+   Then restart Apache.  (This issue has also occurred with SELinux.)
+  </p>
+ </div>
+
+ <div class="section" id="mongo.installation.thirdparty">
+  <h2 class="title">Third-Party Installation Instructions</h2>
+  
+  <p class="para">
+   A number of people have created excellent tutorials on installing the PHP
+   driver.
+  </p>
+
+  <ul class="itemizedlist">
+   <li class="listitem">
+    <p class="para">
+     <a href="http://justinhileman.info/article/reinstalling-php-on-mac-os-x/" class="link external">&raquo;&nbsp;
+      (Re)installing PHP on macOS
+     </a>
+    </p>
+    <p class="para">
+     This article by Justin Hileman details the process of installing PHP and
+     additional extensions with Homebrew on macOS. This complements the earlier
+     instructions on this page for installing the driver with Homebrew.
+    </p>
+   </li>
+   <li class="listitem">
+    <p class="para">
+     <a href="https://www.vimeo.com/8005503" class="link external">&raquo;&nbsp;
+      PHP 5.3.1 with Xdebug, MongoDB and Lithium on Ubuntu 9.10 / Apache 2.2
+     </a>
+    </p>
+    <p class="para">This screencast by Jon Adams demonstrates how to quickly get up and
+      running with PHP 5.3.1, Xdebug, and MongoDB on Ubuntu 9.10 with Apache.
+    </p>
+   </li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

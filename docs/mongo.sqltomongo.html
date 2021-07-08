@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>SQL to Mongo Mapping Chart</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.writeconcerns.html">« Write Concerns</a></li>
+      <li style="float: right;"><a href="mongo.connecting.html">Connecting »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>SQL to Mongo Mapping Chart</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.sqltomongo" class="chapter">
+ <h1>SQL to Mongo Mapping Chart</h1>
+
+ <p class="para">
+  This is a PHP-specific version of the
+  <a href="https://docs.mongodb.com/manual/reference/sql-comparison/" class="link external">&raquo;&nbsp;SQL to Mongo</a>
+  mapping chart in the main docs.
+ </p>
+ <p class="para">
+  <table class="doctable informaltable">
+   
+    <thead>
+     <tr>
+      <th>SQL Statement</th>
+      <th>Mongo Query Language Statement</th>
+     </tr>
+
+    </thead>
+
+
+    <tbody class="tbody">
+     <tr>
+      <td>
+       <code class="literal">CREATE TABLE USERS (a Number, b Number)</code>
+      </td>
+      <td>
+       Implicit or use <span class="function"><a href="mongodb.createcollection.html" class="function">MongoDB::createCollection()</a></span>.
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">INSERT INTO USERS VALUES(1,1)</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;insert(array(&quot;a&quot; =&gt; 1, &quot;b&quot; =&gt; 1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT a,b FROM users</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(), array(&quot;a&quot; =&gt; 1, &quot;b&quot; =&gt; 1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE age=33</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; 33));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT a,b FROM users WHERE age=33</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; 33), array(&quot;a&quot; =&gt; 1, &quot;b&quot; =&gt; 1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT a,b FROM users WHERE age=33 ORDER BY name</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; 33), array(&quot;a&quot; =&gt; 1, &quot;b&quot; =&gt; 1))-&gt;sort(array(&quot;name&quot; =&gt; 1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE age&gt;33</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; array(&#039;$gt&#039; =&gt; 33)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE age&lt;33</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; array(&#039;$lt&#039; =&gt; 33)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE name LIKE &quot;%Joe%&quot;</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;name&quot; =&gt; new MongoRegex(&quot;/Joe/&quot;)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE name LIKE &quot;Joe%&quot;</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;name&quot; =&gt; new MongoRegex(&quot;/^Joe/&quot;)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE age&gt;33 AND age&lt;=40</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; array(&#039;$gt&#039; =&gt; 33, &#039;$lte&#039; =&gt; 40)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users ORDER BY name DESC</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find()-&gt;sort(array(&quot;name&quot; =&gt; -1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">CREATE INDEX myindexname ON users(name)</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;ensureIndex(array(&quot;name&quot; =&gt; 1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">CREATE INDEX myindexname ON users(name,ts DESC)</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;ensureIndex(array(&quot;name&quot; =&gt; 1, &quot;ts&quot; =&gt; -1));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE a=1 and b=&#039;q&#039;</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;a&quot; =&gt; 1, &quot;b&quot; =&gt; &quot;q&quot;));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users LIMIT 20, 10</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find()-&gt;limit(10)-&gt;skip(20);</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users WHERE a=1 or b=2</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&#039;$or&#039; =&gt; array(array(&quot;a&quot; =&gt; 1), array(&quot;b&quot; =&gt; 2))));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT * FROM users LIMIT 1</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find()-&gt;limit(1);</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">EXPLAIN SELECT * FROM users WHERE z=3</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;z&quot; =&gt; 3))-&gt;explain()</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT DISTINCT last_name FROM users</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;command(array(&quot;distinct&quot; =&gt; &quot;users&quot;, &quot;key&quot; =&gt; &quot;last_name&quot;));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT COUNT(*y) FROM users</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;count();</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT COUNT(*y) FROM users where AGE &gt; 30</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; array(&#039;$gt&#039; =&gt; 30)))-&gt;count();</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">SELECT COUNT(AGE) from users</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;find(array(&quot;age&quot; =&gt; array(&#039;$exists&#039; =&gt; true)))-&gt;count();</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">UPDATE users SET a=1 WHERE b=&#039;q&#039;</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;update(array(&quot;b&quot; =&gt; &quot;q&quot;), array(&#039;$set&#039; =&gt; array(&quot;a&quot; =&gt; 1)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">UPDATE users SET a=a+2 WHERE b=&#039;q&#039;</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;update(array(&quot;b&quot; =&gt; &quot;q&quot;), array(&#039;$inc&#039; =&gt; array(&quot;a&quot; =&gt; 2)));</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <code class="literal">DELETE FROM users WHERE z=&quot;abc&quot;</code>
+      </td>
+      <td>
+       <code class="literal">$db-&gt;users-&gt;remove(array(&quot;z&quot; =&gt; &quot;abc&quot;));</code>
+      </td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </p>
+</div>
+</div></div></body></html>

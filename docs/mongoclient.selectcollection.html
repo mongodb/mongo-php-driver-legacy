@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Gets a database collection</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoclient.listdbs.html">« MongoClient::listDBs</a></li>
+      <li style="float: right;"><a href="mongoclient.selectdb.html">MongoClient::selectDB »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoclient.html">MongoClient</a></li>
+    <li>Gets a database collection</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoclient.selectcollection" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoClient::selectCollection</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoClient::selectCollection</span> &mdash; <span class="dc-title">Gets a database collection</span></p>
+
+ </div>
+
+ <div id="mongoclient.selectcollection-soft-deprecation-notice" class="soft-deprecation-notice">
+  <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension, but there is an
+alternative in the <a href="" class="link">PHP library</a>:</p>
+  <ul class="simplelist">
+   <li class="member"><a href="https://docs.mongodb.com/php-library/master/reference/method/MongoDBClient-selectCollection/" class="link external">&raquo;&nbsp;MongoDB\Client::selectCollection()</a></li>
+  </ul>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoclient.selectcollection-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoClient::selectCollection</strong></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$db</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$collection</code></span>): <span class="type"><a href="class.mongocollection.html" class="type MongoCollection">MongoCollection</a></span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoclient.selectcollection-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">db</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The database name.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">collection</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The collection name.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoclient.selectcollection-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns a new collection object.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongoclient.selectcollection-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <strong class="classname">Exception</strong> if the database or collection name is invalid.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongoclient.selectcollection-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-61">
+   <p><strong>Example #1 <span class="function"><strong>MongoClient::selectCollection()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /><br /></span><span style="color: #0000BB">$c1&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"foo"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"bar.baz"</span><span style="color: #007700">);<br /></span><span style="color: #FF8000">//&nbsp;which&nbsp;is&nbsp;equivalent&nbsp;to<br /></span><span style="color: #0000BB">$c2&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"foo"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"bar.baz"</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;$c1&nbsp;and&nbsp;$c2&nbsp;now&nbsp;represent&nbsp;the&nbsp;same&nbsp;collection<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+</div></div></div></body></html>

@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Remove files and their chunks from the database</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongogridfs.put.html">« MongoGridFS::put</a></li>
+      <li style="float: right;"><a href="mongogridfs.storebytes.html">MongoGridFS::storeBytes »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongogridfs.html">MongoGridFS</a></li>
+    <li>Remove files and their chunks from the database</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongogridfs.remove" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoGridFS::remove</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoGridFS::remove</span> &mdash; <span class="dc-title">Remove files and their chunks from the database</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongogridfs.remove-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoGridFS::remove</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$criteria</code><span class="initializer"> = array()</span></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type"><span class="type">bool</span>|<span class="type">array</span></span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongogridfs.remove-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">criteria</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The filename or criteria for which to search.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">options</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       An array of options for the remove operations executed against the
+       <code class="literal">chunks</code> and <code class="literal">files</code> collections. See
+       <span class="function"><a href="mongocollection.remove.html" class="function">MongoCollection::remove()</a></span> for documentation on these
+       options.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongogridfs.remove-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns an array containing the status of the removal (with respect to the
+   <code class="literal">files</code> collection) if the <code class="literal">&quot;w&quot;</code> option is
+   set. Otherwise, returns <strong><code>true</code></strong>.
+  </p>
+  <p class="para">
+   Fields in the status array are described in the documentation for
+   <span class="function"><a href="mongocollection.insert.html" class="function">MongoCollection::insert()</a></span>.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongogridfs.remove-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if the <code class="literal">&quot;w&quot;</code> option is set and the write fails.</p><p class="para">Throws <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> if the <code class="literal">&quot;w&quot;</code> option is set to a value greater than one and the operation takes longer than <var class="varname">MongoCursor::$timeout</var> milliseconds to complete.  This does not kill the operation on the server, it is a client-side timeout. The operation in <var class="varname">MongoCollection::$wtimeout</var> is milliseconds.</p>
+ </div>
+
+
+</div></div></div></body></html>

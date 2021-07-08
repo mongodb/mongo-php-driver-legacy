@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Callback When Retrieving Next Cursor Batch</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="function.log-cmd-update.html">« log_cmd_update</a></li>
+      <li style="float: right;"><a href="function.log-killcursor.html">log_killcursor »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.context.html">Stream Context Options</a></li>
+    <li>Callback When Retrieving Next Cursor Batch</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="function.log-getmore" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">log_getmore</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.5.0)</p><p class="refpurpose"><span class="refname">log_getmore</span> &mdash; <span class="dc-title">Callback When Retrieving Next Cursor Batch</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-function.log-getmore-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="methodname"><strong>log_getmore</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$server</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$info</code></span>)</div>
+
+  <p class="para rdfs-comment">
+   A <span class="type"><a href="language.types.callable.html" class="type callable">callable</a></span> function, used by the
+   <a href="" class="link">log_getmore context option</a>,
+   when executing a GET_MORE operation.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    This is <em class="emphasis">not</em> a real function, only a prototype of how the function should
+    be.
+   </p>
+  </p></blockquote>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-function.log-getmore-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+     <dt>
+ <code class="parameter">server</code> </dt>
+ <dd>
+ <p class="para"> An array containing the basic information about the server that was picked. <table class="doctable informaltable">  <thead> <tr> <th>key</th> <th>value</th> </tr>
+ </thead>
+ <tbody class="tbody"> <tr> <td>hash</td> <td>server hash, example: <code class="literal">localhost:27017;-;X;56052</code></td> </tr>
+ <tr> <td>type</td> <td>Node type (primary/secondary/mongos/arbiter): <code class="literal">2</code></td> </tr>
+ <tr> <td>max_bson_size</td> <td>The maximum BSON Size over the wire this node accepts: <code class="literal">16777216</code></td> </tr>
+ <tr> <td>max_message_size</td> <td>The maximum Message Size over the wire this node accepts: <code class="literal">48000000</code></td> </tr>
+ <tr> <td>request_id</td> <td>The request identifier for this message: <code class="literal">42</code></td> </tr>
+ </tbody>  </table>
+ </p> </dd>
+ 
+   
+    <dt>
+
+     <code class="parameter">info</code>
+    </dt>
+
+    <dd>
+
+     <p class="para">
+      <table class="doctable informaltable">
+       
+        <thead>
+         <tr>
+          <th>key</th>
+          <th>value</th>
+         </tr>
+
+        </thead>
+
+        <tbody class="tbody">
+         <tr>
+          <td>request_id</td>
+          <td>integer, the driver request identifier</td>
+         </tr>
+
+         <tr>
+          <td>cursor_id</td>
+          <td>integer, the cursor identifier being used to fetch more data</td>
+         </tr>
+
+         <tr>
+          <td>batch_size</td>
+          <td>integer, maximum number of documents being requested</td>
+         </tr>
+
+        </tbody>
+       
+      </table>
+
+     </p>
+    </dd>
+
+   
+  </dl>
+
+ </div>
+
+
+</div></div></div></body></html>

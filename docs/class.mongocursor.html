@@ -1,0 +1,440 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoCursor class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.validate.html">« MongoCollection::validate</a></li>
+      <li style="float: right;"><a href="mongocursor.addoption.html">MongoCursor::addOption »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.core.html">Core Classes</a></li>
+    <li>The MongoCursor class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongocursor" class="reference">
+
+ <h1 class="title">The MongoCursor class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;=0.9.0)</p>
+
+  
+  <div class="section" id="mongocursor.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    A cursor is used to iterate through the results of a database query.  For 
+    example, to query the database and see all results, you could do:
+    <div class="example" id="mongocursor.intro-example">
+     <p><strong>Example #1 <strong class="classname">MongoCursor</strong> basic usage</strong></p>
+     <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">iterator_to_array</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+     </div>
+
+    </div>
+   </p>
+   <p class="para">
+    You don&#039;t generally create cursors using the 
+    <strong class="classname">MongoCursor</strong> constructor, you get a new cursor by
+    calling <span class="function"><a href="mongocollection.find.html" class="function">MongoCollection::find()</a></span> (as shown above).
+   </p>
+   <p class="para">
+    Suppose that, in the example above, <code class="literal">$collection</code> was a
+    50GB collection.  We certainly wouldn&#039;t want to load that into memory all 
+    at once, which is what a cursor is for: allowing the client to access the 
+    collection in dribs and drabs.  
+   </p>
+   <p class="para">
+    If we have a large result set, we can iterate through it, loading a few 
+    megabytes of results into memory at a time.  For example, we could do:
+    <div class="example" id="example-139">
+     <p><strong>Example #2 Iterating over <strong class="classname">MongoCursor</strong></strong></p>
+     <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /><br />foreach&nbsp;(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$doc</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;do&nbsp;something&nbsp;to&nbsp;each&nbsp;document<br /></span><span style="color: #007700">}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+     </div>
+
+    </div>
+    This will go through each document in the collection, loading and garbage 
+    collecting documents as needed.
+   </p>
+   <p class="para">
+    Note that this means that a cursor does not &quot;contain&quot; the database results, 
+    it just manages them.  Thus, if you print a cursor (with, say, 
+    <span class="function"><strong>var_dump()</strong></span> or <span class="function"><strong>print_r()</strong></span>), you&#039;ll just 
+    get the cursor object, not your documents.  To get the documents themselves, 
+    you can use one of the methods shown above.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Cursor Stages</h2>
+   <p class="para">
+    A <strong class="classname">MongoCursor</strong> has two &quot;life stages&quot;: pre- and post-
+    query. When a cursor is created, it has not yet contacted the database, so 
+    it is in its pre-query state.  In this state, the client can further specify
+    what they want the query to do, including adding limits, skips, sorts, and 
+    more advanced options.
+   </p>
+   <p class="para">
+    When the client attempts to get a result (by calling 
+    <span class="function"><a href="mongocursor.next.html" class="function">MongoCursor::next()</a></span>, directly or indirectly), the cursor
+    moves into the post-query stage.  At this point, the query has been executed
+    by the database and cannot be modified anymore.
+   </p>
+   <p class="para">
+    <div class="example" id="mongocursor.stages.adding-options">
+     <p><strong>Example #3 Adding options to <strong class="classname">MongoCursor</strong></strong></p>
+     <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">()-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">10</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;database&nbsp;has&nbsp;not&nbsp;yet&nbsp;been&nbsp;queried,&nbsp;so&nbsp;more&nbsp;search&nbsp;options&nbsp;can&nbsp;be&nbsp;added<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">sort</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"a"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getNext</span><span style="color: #007700">());<br /></span><span style="color: #FF8000">//&nbsp;now&nbsp;database&nbsp;has&nbsp;been&nbsp;queried&nbsp;and&nbsp;more&nbsp;options&nbsp;cannot&nbsp;be&nbsp;added<br /><br />//&nbsp;so&nbsp;this&nbsp;will&nbsp;throw&nbsp;an&nbsp;exception:<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">skip</span><span style="color: #007700">(</span><span style="color: #0000BB">4</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+     </div>
+
+    </div>
+   </p>
+  </div>
+  
+
+  <div class="section" id="mongocursor.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+   
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+    
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoCursor</strong>
+     </span>
+     <span class="oointerface">implements 
+      <span class="interfacename"><a href="class.mongocursorinterface.html" class="interfacename">MongoCursorInterface</a></span>
+     </span>
+     <span class="oointerface">, 
+      <span class="interfacename"><strong class="interfacename">Iterator</strong></span>
+     </span>
+     {</div>
+    
+    
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Static Fields */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">static</span>
+     <span class="type">bool</span>
+      <var class="varname"><a href="class.mongocursor.html#mongocursor.props.slaveokay">$<var class="varname">slaveOkay</var></a></var><span class="initializer"> = <strong><code>false</code></strong></span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">static</span>
+     <span class="type">int</span>
+      <var class="varname"><a href="class.mongocursor.html#mongocursor.props.timeout">$<var class="varname">timeout</var></a></var><span class="initializer"> = 30000</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Methods */</div>
+    <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><a href="mongocursor.addoption.html" class="methodname">addOption</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$key</code></span>, <span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$value</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.awaitdata.html" class="methodname">awaitData</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$wait</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.batchsize.html" class="methodname">batchSize</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$batchSize</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.construct.html" class="methodname">__construct</a></span>(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type"><a href="class.mongoclient.html" class="type MongoClient">MongoClient</a></span> <code class="parameter">$connection</code></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">string</span> <code class="parameter">$ns</code></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$query</code><span class="initializer"> = array()</span></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$fields</code><span class="initializer"> = array()</span></span><br>)</div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.count.html" class="methodname">count</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$foundOnly</code><span class="initializer"> = <strong><code>false</code></strong></span></span>): <span class="type">int</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.current.html" class="methodname">current</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.dead.html" class="methodname">dead</a></span>(): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">protected</span> <span class="methodname"><a href="mongocursor.doquery.html" class="methodname">doQuery</a></span>(): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.explain.html" class="methodname">explain</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.fields.html" class="methodname">fields</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$f</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.getnext.html" class="methodname">getNext</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.getreadpreference.html" class="methodname">getReadPreference</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.hasnext.html" class="methodname">hasNext</a></span>(): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.hint.html" class="methodname">hint</a></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$index</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.immortal.html" class="methodname">immortal</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$liveForever</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.info.html" class="methodname">info</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.key.html" class="methodname">key</a></span>(): <span class="type"><span class="type">string</span>|<span class="type">int</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.limit.html" class="methodname">limit</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$num</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.maxtimems.html" class="methodname">maxTimeMS</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$ms</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.next.html" class="methodname">next</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.partial.html" class="methodname">partial</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$okay</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.reset.html" class="methodname">reset</a></span>(): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.rewind.html" class="methodname">rewind</a></span>(): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.setflag.html" class="methodname">setFlag</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$flag</code></span>, <span class="methodparam"><span class="type">bool</span> <code class="parameter">$set</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.setreadpreference.html" class="methodname">setReadPreference</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$read_preference</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$tags</code><span class="initializer"> = ?</span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.skip.html" class="methodname">skip</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$num</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.slaveokay.html" class="methodname">slaveOkay</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$okay</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.snapshot.html" class="methodname">snapshot</a></span>(): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.sort.html" class="methodname">sort</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$fields</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.tailable.html" class="methodname">tailable</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$tail</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.timeout.html" class="methodname">timeout</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$ms</code></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongocursor.valid.html" class="methodname">valid</a></span>(): <span class="type">bool</span></div>
+
+   }</div>
+   
+
+  </div>
+
+  <div class="section">
+   <h2 class="title">Static Variables</h2>
+
+   <dl>
+
+    
+     <dt id="mongocursor.props.slaveokay"><var class="varname">slaveOkay</var></dt>
+
+     <dd>
+
+      <p class="para">
+       If the query should have the &quot;slaveOkay&quot; flag set, which allows reads on
+       the secondary (secondaries are, by default, just for backup and not
+       queried). Can be overridden with <span class="function"><a href="mongocursor.slaveokay.html" class="function">MongoCursor::slaveOkay()</a></span>.
+      </p>
+      <p class="para">
+       This functionality is <em class="emphasis">deprecated</em>. Please use
+       <a href="mongo.readpreferences.html" class="xref">Read Preferences</a> instead.
+      </p>
+     </dd>
+
+    
+    
+     <dt id="mongocursor.props.timeout"><var class="varname">timeout</var></dt>
+
+     <dd>
+
+      <p class="para">
+       Set timeout in milliseconds for all database responses. Use
+       <code class="literal">-1</code> to wait forever. Can be overridden with
+       <span class="function"><a href="mongocursor.timeout.html" class="function">MongoCursor::timeout()</a></span>. This does not cause the
+       MongoDB server to cancel the operation; it only instructs the driver to
+       stop waiting for a response and throw a
+       <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> after a set time.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </div>
+
+  <div class="section">
+   <h2 class="title">See Also</h2>
+   <p class="para">
+    MongoDB core docs on <a href="https://docs.mongodb.com/manual/core/cursors/" class="link external">&raquo;&nbsp;cursors</a>.
+   </p>
+  </div>
+
+ </div>
+
+ 
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+<h2>Table of Contents</h2><ul class="chunklist chunklist_reference"><li><a href="mongocursor.addoption.html">MongoCursor::addOption</a> — Adds a top-level key/value pair to a query</li><li><a href="mongocursor.awaitdata.html">MongoCursor::awaitData</a> — Sets whether this cursor will wait for a while for a tailable cursor to return more data</li><li><a href="mongocursor.batchsize.html">MongoCursor::batchSize</a> — Limits the number of elements returned in one batch</li><li><a href="mongocursor.construct.html">MongoCursor::__construct</a> — Create a new cursor</li><li><a href="mongocursor.count.html">MongoCursor::count</a> — Counts the number of results for this query</li><li><a href="mongocursor.current.html">MongoCursor::current</a> — Returns the current element</li><li><a href="mongocursor.dead.html">MongoCursor::dead</a> — Checks if there are results that have not yet been sent from the database</li><li><a href="mongocursor.doquery.html">MongoCursor::doQuery</a> — Execute the query</li><li><a href="mongocursor.explain.html">MongoCursor::explain</a> — Return an explanation of the query, often useful for optimization and debugging</li><li><a href="mongocursor.fields.html">MongoCursor::fields</a> — Sets the fields for a query</li><li><a href="mongocursor.getnext.html">MongoCursor::getNext</a> — Advances the cursor to the next result, and returns that result</li><li><a href="mongocursor.getreadpreference.html">MongoCursor::getReadPreference</a> — Get the read preference for this query</li><li><a href="mongocursor.hasnext.html">MongoCursor::hasNext</a> — Checks if there are any more elements in this cursor</li><li><a href="mongocursor.hint.html">MongoCursor::hint</a> — Gives the database a hint about the query</li><li><a href="mongocursor.immortal.html">MongoCursor::immortal</a> — Sets whether this cursor will timeout</li><li><a href="mongocursor.info.html">MongoCursor::info</a> — Gets information about the cursor's creation and iteration</li><li><a href="mongocursor.key.html">MongoCursor::key</a> — Returns the current result's _id, or its index within the result set</li><li><a href="mongocursor.limit.html">MongoCursor::limit</a> — Limits the number of results returned</li><li><a href="mongocursor.maxtimems.html">MongoCursor::maxTimeMS</a> — Sets a server-side timeout for this query</li><li><a href="mongocursor.next.html">MongoCursor::next</a> — Advances the cursor to the next result, and returns that result</li><li><a href="mongocursor.partial.html">MongoCursor::partial</a> — If this query should fetch partial results from mongos if a shard is down</li><li><a href="mongocursor.reset.html">MongoCursor::reset</a> — Clears the cursor</li><li><a href="mongocursor.rewind.html">MongoCursor::rewind</a> — Returns the cursor to the beginning of the result set</li><li><a href="mongocursor.setflag.html">MongoCursor::setFlag</a> — Sets arbitrary flags in case there is no method available the specific flag</li><li><a href="mongocursor.setreadpreference.html">MongoCursor::setReadPreference</a> — Set the read preference for this query</li><li><a href="mongocursor.skip.html">MongoCursor::skip</a> — Skips a number of results</li><li><a href="mongocursor.slaveokay.html">MongoCursor::slaveOkay</a> — Sets whether this query can be done on a secondary [deprecated]</li><li><a href="mongocursor.snapshot.html">MongoCursor::snapshot</a> — Use snapshot mode for the query</li><li><a href="mongocursor.sort.html">MongoCursor::sort</a> — Sorts the results by given fields</li><li><a href="mongocursor.tailable.html">MongoCursor::tailable</a> — Sets whether this cursor will be left open after fetching the last results</li><li><a href="mongocursor.timeout.html">MongoCursor::timeout</a> — Sets a client-side timeout for this query</li><li><a href="mongocursor.valid.html">MongoCursor::valid</a> — Checks if the cursor is reading a valid result</li></ul>
+</div>
+</div></div></body></html>

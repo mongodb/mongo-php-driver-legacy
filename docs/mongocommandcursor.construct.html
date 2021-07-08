@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Create a new command cursor</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocommandcursor.batchsize.html">« MongoCommandCursor::batchSize</a></li>
+      <li style="float: right;"><a href="mongocommandcursor.createfromdocument.html">MongoCommandCursor::createFromDocument »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocommandcursor.html">MongoCommandCursor</a></li>
+    <li>Create a new command cursor</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocommandcursor.construct" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCommandCursor::__construct</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.5.0)</p><p class="refpurpose"><span class="refname">MongoCommandCursor::__construct</span> &mdash; <span class="dc-title">Create a new command cursor</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocommandcursor.construct-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCommandCursor::__construct</strong></span>(<span class="methodparam"><span class="type"><a href="class.mongoclient.html" class="type MongoClient">MongoClient</a></span> <code class="parameter">$connection</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$ns</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$command</code><span class="initializer"> = array()</span></span>)</div>
+
+  <p class="para rdfs-comment">
+   Generally, you should not have to construct a
+   <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> manually, as there are helper
+   functions such as <span class="methodname"><a href="mongocollection.aggregatecursor.html" class="methodname">MongoCollection::aggregateCursor()</a></span>
+   and <span class="methodname"><a href="mongocollection.parallelcollectionscan.html" class="methodname">MongoCollection::parallelCollectionScan()</a></span>;
+   however, if the server introduces new commands that can return cursors, this
+   constructor will be useful in the absence of specific helper methods. You may
+   also consider using
+   <span class="methodname"><a href="mongocommandcursor.createfromdocument.html" class="methodname">MongoCommandCursor::createFromDocument()</a></span>.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocommandcursor.construct-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">connection</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Database connection.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">ns</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Full name of the database and collection (e.g.
+       <code class="literal">&quot;test.foo&quot;</code>)
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">command</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Database command.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocommandcursor.construct-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the new cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocommandcursor.construct-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-159">
+   <p><strong>Example #1 <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;Define&nbsp;the&nbsp;aggregation&nbsp;pipeline<br /></span><span style="color: #0000BB">$pipeline&nbsp;</span><span style="color: #007700">=&nbsp;[<br />&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$country_code'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'timezones'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$addToSet'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$timezone'&nbsp;</span><span style="color: #007700">]<br />&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;],<br />&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$sort'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1&nbsp;</span><span style="color: #007700">]&nbsp;],<br />];<br /><br /></span><span style="color: #FF8000">//&nbsp;Construct&nbsp;a&nbsp;MongoCommandCursor&nbsp;object<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCommandCursor</span><span style="color: #007700">(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">,&nbsp;</span><span style="color: #FF8000">//&nbsp;MongoClient&nbsp;object<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'demo.cities'</span><span style="color: #007700">,&nbsp;</span><span style="color: #FF8000">//&nbsp;namespace<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #007700">[<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'aggregate'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'cities'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'pipeline'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$pipeline</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'cursor'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'batchSize'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0&nbsp;</span><span style="color: #007700">],<br />&nbsp;&nbsp;&nbsp;&nbsp;]<br />);<br /><br />foreach(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$result</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">…<br /></span><span style="color: #007700">}<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocommandcursor.construct-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="function"><a href="mongocommandcursor.createfromdocument.html" class="function" rel="rdfs-seeAlso">MongoCommandCursor::createFromDocument()</a> - Create a new command cursor from an existing command response document</span></li>
+   <li class="member"><span class="function"><a href="mongocollection.aggregatecursor.html" class="function" rel="rdfs-seeAlso">MongoCollection::aggregateCursor()</a> - Execute an aggregation pipeline command and retrieve results through a cursor</span></li>
+   <li class="member"><span class="function"><a href="mongocollection.parallelcollectionscan.html" class="function" rel="rdfs-seeAlso">MongoCollection::parallelCollectionScan()</a> - Returns an array of cursors to iterator over a full collection in parallel</span></li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

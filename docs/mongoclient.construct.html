@@ -1,0 +1,893 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Creates a new database connection object</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoclient.connect.html">« MongoClient::connect</a></li>
+      <li style="float: right;"><a href="mongoclient.dropdb.html">MongoClient::dropDB »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoclient.html">MongoClient</a></li>
+    <li>Creates a new database connection object</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoclient.construct" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoClient::__construct</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoClient::__construct</span> &mdash; <span class="dc-title">Creates a new database connection object</span></p>
+
+ </div>
+
+ <div id="mongoclient.construct-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+Alternatives to this method include:</p>
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><strong>MongoDB\Driver\Manager::__construct()</strong></span></li>
+   </ul>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoclient.construct-description">
+  <h3 class="title">Description</h3>
+  <div class="constructorsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoClient::__construct</strong></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$server</code><span class="initializer"> = &quot;mongodb://localhost:27017&quot;</span></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array(&quot;connect&quot; =&gt; <strong><code>true</code></strong>)</span></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$driver_options</code><span class="initializer"> = ?</span></span>)</div>
+
+  <p class="para rdfs-comment">
+   If no parameters are passed, this connects to &quot;localhost:27017&quot; (or whatever
+   was specified in php.ini for
+   <a href="mongo.configuration.html#ini.mongo.default-host" class="link">mongo.default_host</a> and
+   <a href="mongo.configuration.html#ini.mongo.default-port" class="link">mongo.default_port</a>).
+  </p>
+  <p class="para">
+   <code class="parameter">server</code> should have the form:
+   <div class="example-contents">
+<div class="txtcode"><pre class="txtcode">mongodb://[username:password@]host1[:port1][,host2[:port2:],...]/db</pre>
+</div>
+   </div>
+
+  </p>
+  <p class="para">
+   The connection string always starts with <code class="literal">mongodb://</code>, to
+   indicate it is a connection string in this form.
+  </p>
+  <p class="para">If <code class="literal">username</code> and <code class="literal">password</code>
+   are specified, the constructor will attempt to authenticate the connection
+   with the database before returning.  Username and password are optional
+   and must be followed by an <code class="literal">@</code>, if specified.
+  </p>
+  <p class="para">
+   At least one host must be given (port optional, always defaulting to 27017)
+   and as many hosts as desired may be connected to. Host names are
+   comma-separated and the constructor will return successfully if it connected
+   to at least one host. If it could not connect to any of the hosts, it will
+   throw a <a href="class.mongoconnectionexception.html" class="classname">MongoConnectionException</a>. Please see the
+   <a href="mongo.connecting.rs.html" class="link">Replica Sets</a> section for
+   information on how to connect to Replica Sets.
+  </p>
+  <p class="para">
+   If you specified a username and password, you may specify a database to
+   authenticate with.  If <code class="literal">db</code> is not specified, &quot;admin&quot; will
+   be used.
+  </p>
+  <p class="para">
+   An optional query string may be used to specify extra options. The same
+   options are supported through the <code class="parameter">options</code> array as
+   well, and are therefore redescribed there. See the <a href="" class="link">examples below</a> on
+   how to set those options.
+  </p>
+  <p class="para">
+   One part of the options governs how the driver reads from secondary nodes
+   in a replica set environment. Extra information on how these read
+   preferences work is available as well through the <a href="mongo.readpreferences.html" class="link">read preferences</a> documentation page.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="mongo.mongoclient.construct.parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">server</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The server name.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">options</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       An array of options for the connection. Currently available options
+       include:
+       <ul class="itemizedlist">
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;authMechanism&quot;</code>
+         </p>
+         <p class="para">
+          Available mechanisms are:
+          <table class="doctable informaltable">
+           
+            <thead>
+             <tr>
+              <th>authMechanism</th>
+              <th>Description</th>
+              <th>Availability</th>
+             </tr>
+
+            </thead>
+
+            <tbody class="tbody">
+             <tr>
+              <td>MONGODB-CR</td>
+              <td>Authenticate using Challenge Response mechanism. This is the default value.</td>
+              <td>All MongoDB versions</td>
+             </tr>
+
+             <tr>
+              <td>MONGODB-X509</td>
+              <td>Authenticates using X509 certificates</td>
+              <td>MongoDB 2.6. Only available when <a href="" class="xref"></a> is enabled</td>
+             </tr>
+
+             <tr>
+              <td>PLAIN</td>
+              <td>Authenticates using unencrypted plain username+password. Must be used over SSL connections. Generally used by MongoDB to login via 3rd party LDAP server</td>
+              <td>MongoDB Enterprise 2.4. The Driver must be compiled against CyrusSASL2</td>
+             </tr>
+
+             <tr>
+              <td>GSSAPI</td>
+              <td>Authenticates via kerberos systems</td>
+              <td>MongoDB Enterprise 2.4. The Driver must be compiled against CyrusSASL2</td>
+             </tr>
+
+             <tr>
+              <td>SCRAM-SHA-1</td>
+              <td>Authenticates using SCRAM-SHA-1</td>
+              <td>MongoDB 3.0.</td>
+             </tr>
+
+            </tbody>
+           
+          </table>
+
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;authSource&quot;</code>
+         </p>
+         <p class="para">
+          Should be set to the database name where the user is defined it.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;connect&quot;</code>
+         </p>
+         <p class="para">
+          If the constructor should connect before returning.  Default is
+          <strong><code>true</code></strong>. When set to <strong><code>false</code></strong> the driver will
+          <em class="emphasis">automatically</em> connect to the server whenever
+          it is necessary to do a query. Alternatively, you can run
+          <span class="function"><a href="mongoclient.connect.html" class="function">MongoClient::connect()</a></span> manually.
+         </p>
+         <div class="warning"><strong class="warning">Warning</strong>
+          <p class="para">
+           This option is not supported through the connection string.
+          </p>
+         </div>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;connectTimeoutMS&quot;</code>
+         </p>
+         <p class="para">
+          How long a connection can take to be opened before timing out in
+          milliseconds. Defaults to <code class="literal">60000</code> (60 seconds).
+         </p>
+         <p class="para">
+          If <code class="literal">-1</code> is specified, no connection timeout will be
+          applied and PHP will use
+          <a href="" class="link">default_socket_timeout</a>.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;db&quot;</code>
+         </p>
+         <p class="para">
+          The database to authenticate against can be specified here, instead of
+          including it in the host list.  This overrides a database given in the
+          host list.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;fsync&quot;</code>
+         </p>
+         <p class="para">
+          When <code class="literal">&quot;fsync&quot;</code> is set, all write operations will
+          block until the database has flushed the changes to disk. This makes
+          the write operations slower, but it guarantees that writes have
+          succeeded and that the operations can be recovered in case of total
+          system failure.
+         </p>
+         <p class="para">
+          If the MongoDB server has journaling enabled, this option is identical
+          to <em class="emphasis">&quot;journal&quot;</em>. If journaling is not enabled, this
+          option ensures that write operations will be synced to database files
+          on disk.
+         </p>
+         <blockquote class="note"><p><strong class="note">Note</strong>: 
+          <span class="simpara">
+           If journaling is enabled, users are strongly encouraged to use the
+           <code class="literal">&quot;journal&quot;</code> option instead of
+           <code class="literal">&quot;fsync&quot;</code>. Do not use <code class="literal">&quot;fsync&quot;</code> and
+           <code class="literal">&quot;journal&quot;</code> simultaneously, as that will result in
+           an error.
+          </span>
+         </p></blockquote>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;journal&quot;</code>
+         </p>
+         <p class="para">
+          When <code class="literal">&quot;journal&quot;</code> is set, all write operations will
+          block until the database has flushed the changes to the journal on
+          disk. This makes the write operations slower, but it guarantees that
+          writes have succeeded and that the operations can be recovered in case
+          of total system failure.
+         </p>
+         <blockquote class="note"><p><strong class="note">Note</strong>: 
+          <span class="simpara">
+           If this option is used and journaling is disabled, MongoDB 2.6+ will
+           raise an error and the write will fail; older server versions will
+           simply ignore the option.
+          </span>
+         </p></blockquote>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;gssapiServiceName&quot;</code>
+         </p>
+         <p class="para">
+          Sets the <a href="https://docs.mongodb.com/manual/core/kerberos/#kerberos-service-principal" class="link external">&raquo;&nbsp;Kerberos service principal</a>. Only applicable when authMechanism=GSSAPI. Defaults to &quot;mongodb&quot;.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;password&quot;</code>
+         </p>
+         <p class="para">
+          The password can be specified here, instead of including it in the
+          host list.  This is especially useful if a password has a &quot;@&quot; in it.
+          This overrides a password set in the host list.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;readPreference&quot;</code>
+         </p>
+         <p class="para">
+          Specifies the read preference type. Read preferences provide you
+          with control from which secondaries data can be read from.
+         </p>
+         <p class="para">
+          Allowed values are: <strong><code>MongoClient::RP_PRIMARY</code></strong>,
+          <strong><code>MongoClient::RP_PRIMARY_PREFERRED</code></strong>,
+          <strong><code>MongoClient::RP_SECONDARY</code></strong>,
+          <strong><code>MongoClient::RP_SECONDARY_PREFERRED</code></strong> and
+          <strong><code>MongoClient::RP_NEAREST</code></strong>.
+         </p>
+         <p class="para">
+          See the documentation on <a href="mongo.readpreferences.html" class="link">read
+          preferences</a> for more information.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;readPreferenceTags&quot;</code>
+         </p>
+         <p class="para">
+          Specifies the read preference tags as an array of strings. Tags can be
+          used in combination with the <code class="literal">readPreference</code> option
+          to further control which secondaries data might be read from.
+         </p>
+         <p class="para">
+          See the documentation on <a href="mongo.readpreferences.html" class="link">read
+          preferences</a> for more information.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;replicaSet&quot;</code>
+         </p>
+         <p class="para">
+          The name of the replica set to connect to.  If this is given, the
+          primary will be automatically be determined. This means that the
+          driver may end up connecting to a server that was not even listed.
+          See the replica set example below for details.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;secondaryAcceptableLatencyMS&quot;</code>
+         </p>
+         <p class="para">
+          When reading from a secondary (using ReadPreferences), do not read from secondaries known to be more then
+          <code class="literal">secondaryAcceptableLatencyMS</code> away from us. Defaults to <code class="literal">15</code>
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;socketTimeoutMS&quot;</code>
+         </p>
+         <p class="para">
+          How long a socket operation (read or write) can take before timing out
+          in milliseconds. Defaults to <code class="literal">30000</code> (30 seconds).
+         </p>
+         <p class="para">
+          If <code class="literal">-1</code> is specified, socket operations may block
+          indefinitely. This option may also be set on a per-operation basis
+          using <span class="methodname"><a href="mongocursor.timeout.html" class="methodname">MongoCursor::timeout()</a></span> for queries or the
+          <code class="literal">&quot;socketTimeoutMS&quot;</code> option for write methods.
+         </p>
+         <blockquote class="note"><p><strong class="note">Note</strong>: 
+          <span class="simpara">
+           This is a client-side timeout. If a write operation times out, there
+           is no way to know if the server actually handled the write or not, as
+           a <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> will be thrown
+           in lieu of returning a write result.
+          </span>
+         </p></blockquote>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;ssl&quot;</code>
+         </p>
+         <p class="para">
+          A boolean to specify whether you want to enable SSL for the
+          connections to MongoDB. Extra options such as certificates
+          can be set with <a href="" class="xref"></a>.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;username&quot;</code>
+         </p>
+         <p class="para">
+          The username can be specified here, instead of including it in the
+          host list.  This is especially useful if a username has a &quot;:&quot; in it.
+          This overrides a username set in the host list.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;w&quot;</code>
+         </p>
+         <p class="para">
+          The <code class="literal">w</code> option specifies the
+          <a href="mongo.writeconcerns.html" class="link">Write Concern</a> for the driver,
+          which determines how long the driver blocks when writing. The
+          default value is <code class="literal">1</code>.
+         </p>
+         <p class="para">
+          This option is applicable when connecting to both single servers and
+          replica sets. A positive value controls how <em class="emphasis">many</em>
+          nodes must acknowledge the write instruction before the driver
+          continues. A value of <code class="literal">1</code> would require the single
+          server or primary (in a replica set) to acknowledge the write
+          operation. A value of <code class="literal">3</code> would cause the driver to
+          block until the write has been applied to the primary as well as two
+          secondary servers (in a replica set).
+         </p>
+         <p class="para">
+          A string value is used to control which tag sets are taken into
+          account for write concerns. <code class="literal">&quot;majority&quot;</code> is special
+          and ensures that the write operation has been applied to the majority
+          (more than 50%) of the participating nodes.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;wTimeoutMS&quot;</code>
+         </p>
+         <p class="para">
+          This option specifies the time limit, in milliseconds, for
+          <a href="mongo.writeconcerns.html" class="link">write concern</a>
+          acknowledgement. It is only applicable for write operations where
+          <code class="literal">&quot;w&quot;</code> is greater than <code class="literal">1</code>, as the
+          timeout pertains to replication. If the write concern is not satisfied
+          within the time limit, a <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a>
+          will be thrown. A value of <code class="literal">0</code> may be specified to
+          block indefinitely. The default value is <code class="literal">10000</code>
+          (ten seconds).
+         </p>
+        </li>
+       </ul>
+      </p>
+      <p class="para">
+       The following options are deprecated and should no longer be used:
+       <ul class="itemizedlist">
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;slaveOkay&quot;</code>
+         </p>
+         <p class="para">
+          Deprecated. Please use the <a href="mongo.readpreferences.html" class="link">read
+          preference</a> options.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;timeout&quot;</code>
+         </p>
+         <p class="para">
+          Deprecated alias for <code class="literal">&quot;connectTimeoutMS&quot;</code>.
+         </p>
+        </li>
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;wTimeout&quot;</code>
+         </p>
+         <p class="para">
+          Deprecated alias for <code class="literal">&quot;wTimeoutMS&quot;</code>.
+         </p>
+        </li>
+       </ul>
+      </p>
+     </dd>
+
+    
+
+    
+     <dt>
+
+      <code class="parameter">driver_options</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       An array of options for the MongoDB driver. Options include setting
+       connection <a href="mongo.connecting.ssl.html#mongo.connecting.context.ssl" class="link">context options for SSL</a>
+       or <a href="" class="link">logging callbacks</a>.
+       <ul class="itemizedlist">
+        <li class="listitem">
+         <p class="para">
+          <code class="literal">&quot;context&quot;</code>
+         </p>
+         <p class="para">
+          The Stream Context to attach to all new connections. This allows you 
+          for example to configure SSL certificates and are described at
+          <a href="" class="link">SSL context options</a>. See the 
+          <a href="mongo.connecting.ssl.html#mongo.connecting.context.ssl" class="link">Connecting over SSL</a> tutorial.
+         </p>
+        </li>
+       </ul>
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoclient.construct-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns a new database connection object.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongoclient.construct-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongoconnectionexception.html" class="classname">MongoConnectionException</a> if it tries and fails
+   to connect to the database for all hostnames given.  It will also throw a
+   <strong class="classname">MongoConnnectionException</strong> if an invalid username or
+   password is given.  See <a href="class.mongoconnectionexception.html" class="classname">MongoConnectionException</a>
+   documentation for common exceptions and their causes.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="mongo.mongoclient.construct.examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-50">
+   <p><strong>Example #1 <span class="function"><strong>MongoClient::__construct()</strong></span> replica set example</strong></p>
+   <div class="example-contents"><p>
+    This example shows how to connect the driver to a replica set. It assumes
+    that there is a set of three servers: sf1.example.com, sf2.example.com, and
+    ny1.example.com. The primary could be any one of these servers.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;pass&nbsp;a&nbsp;comma-separated&nbsp;list&nbsp;of&nbsp;server&nbsp;names&nbsp;to&nbsp;the&nbsp;constructor<br />//&nbsp;Note&nbsp;that&nbsp;we&nbsp;don't&nbsp;need&nbsp;to&nbsp;pass&nbsp;in&nbsp;all&nbsp;the&nbsp;members&nbsp;of&nbsp;the&nbsp;replicaset,&nbsp;the&nbsp;driver&nbsp;<br />//&nbsp;will&nbsp;derive&nbsp;the&nbsp;full&nbsp;list.<br /></span><span style="color: #0000BB">$m1&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://sf2.example.com,ny1.example.com"</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"replicaSet"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"myReplSet"</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>
+    If the current primary fails, the driver will figure out which secondary
+    server became the new primary and automatically start using that connection.
+    Automatic failover will not work correctly if <code class="literal">replicaSet</code>
+    is not specified.
+   </p></div>
+   <div class="example-contents"><p>
+    At least one seed in the seed list must be up for the driver to connect to
+    the replica set.
+   </p></div>
+   <div class="example-contents"><p>
+    If you include seeds from two separate replica sets, behavior is undefined.
+   </p></div>
+   <div class="example-contents"><p>See the
+    <a href="https://docs.mongodb.com/manual/replication/" class="link external">&raquo;&nbsp;core documentation</a> on
+    replica sets for more information.
+   </p></div>
+  </div>
+  <div class="example" id="example-51">
+   <p><strong>Example #2 Connecting to a domain socket</strong></p>
+   <div class="example-contents"><p>
+    In version 1.0.9+, you can use a UNIX domain socket to connect to an
+    instance of MongoDB running locally.  This should be slightly faster than
+    using a network connection.
+   </p></div>
+   <div class="example-contents"><p>
+    In version 1.5.0, the MongoDB server automatically opens a socket at
+    /tmp/mongodb-&lt;port&gt;.sock.  You can connect to this by specifying the
+    path in your connection string:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;MongoDB&nbsp;server&nbsp;running&nbsp;locally&nbsp;on&nbsp;port&nbsp;20000<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb:///tmp/mongodb-20000.sock"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>
+    You can combine this with any other connections you&#039;d like:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;try&nbsp;to&nbsp;connect&nbsp;to&nbsp;the&nbsp;domain&nbsp;socket,&nbsp;fall&nbsp;back&nbsp;to&nbsp;localhost&nbsp;connection<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb:///tmp/mongodb-27017.sock,localhost:27017"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <div class="example" id="example-52">
+   <p><strong>Example #3 <span class="function"><strong>MongoClient::__construct()</strong></span> authentication example</strong></p>
+   <div class="example-contents"><p>
+    A user must exist in the admin database before attempting to use
+    authentication.  You can create one with the Mongo shell by running:
+   </p></div>
+   <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">&gt; use admin
+switched to db admin
+&gt; db.addUser(&quot;testUser&quot;, &quot;testPass&quot;);
+{
+        &quot;_id&quot; : ObjectId(&quot;4b21272fd9ab21611d19095c&quot;),
+        &quot;user&quot; : &quot;testUser&quot;,
+        &quot;pwd&quot; : &quot;03b9b27e0abf1865e2f6fcbd9845dd59&quot;
+}
+&gt;</pre>
+</div>
+   </div>
+
+   <div class="example-contents"><p>
+    After creating a user with, in this case, username &quot;testUser&quot; and password
+    &quot;testPass&quot;, you can create an authenticated connection:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://testUser:testPass@localhost"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <div class="example" id="example-53">
+   <p><strong>Example #4 <span class="function"><strong>MongoClient::__construct()</strong></span> read preference example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;Prefer&nbsp;the&nbsp;nearest&nbsp;server&nbsp;in&nbsp;the&nbsp;"east"&nbsp;data&nbsp;center<br /></span><span style="color: #0000BB">$uri&nbsp;&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #DD0000">'mongodb://rs1.example.com,rs2.example.com/'</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$uri&nbsp;</span><span style="color: #007700">.=&nbsp;</span><span style="color: #DD0000">'?readPreference=nearest'</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$uri&nbsp;</span><span style="color: #007700">.=&nbsp;</span><span style="color: #DD0000">'&amp;readPreferenceTags=dc:east'</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #0000BB">$uri</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">'replicaSet'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'rs'</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>
+    See the <a href="mongo.readpreferences.html" class="link">read preferences</a>
+    section of this manual for further information.
+   </p></div>
+  </div>
+
+  <div class="example" id="example-54">
+   <p><strong>Example #5 <span class="function"><strong>MongoClient::__construct()</strong></span> options example</strong></p>
+   <div class="example-contents"><p>
+    Options can be passed both through the query string in the connection
+    string, or as an array passed as second argument to the constructor.
+   </p></div>
+   <div class="example-contents"><p>
+    Here we set the journal option to true and readPreference to secondary
+    preferred as default for all write operations:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://localhost/?journal=true&amp;readPreference=secondary"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>
+    And now we do the same, but as an options array:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$options&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'journal'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'readPreference'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'secondary'</span><span style="color: #007700">,<br />);<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://localhost/"</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$options</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+
+  <div class="example" id="example-55">
+   <p><strong>Example #6 <span class="function"><strong>MongoClient::__construct()</strong></span> read preference example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;Prefer&nbsp;the&nbsp;nearest&nbsp;server&nbsp;in&nbsp;the&nbsp;"east"&nbsp;data&nbsp;center<br /></span><span style="color: #0000BB">$uri&nbsp;&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #DD0000">'mongodb://rs1.example.com,rs2.example.com/'</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$uri&nbsp;</span><span style="color: #007700">.=&nbsp;</span><span style="color: #DD0000">'?readPreference=nearest'</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$uri&nbsp;</span><span style="color: #007700">.=&nbsp;</span><span style="color: #DD0000">'&amp;readPreferenceTags=dc:east'</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #0000BB">$uri</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">'replicaSet'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'rs'</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>
+    See the <a href="mongo.readpreferences.html" class="link">read preferences</a>
+    section of this manual for further information.
+   </p></div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongoclient.construct-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.6.0</td>
+       <td>
+        <p class="para">
+         Added support for <code class="literal">&quot;SCRAM-SHA-1&quot;</code> in
+         <code class="literal">&quot;authMechanism&quot;</code> option.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.5.0</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;authMechanism&quot;</code>, <code class="literal">&quot;gssapiServiceName&quot;</code>, and <code class="literal">&quot;secondaryAcceptableLatencyMS&quot;</code>.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.4.0</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;ssl&quot;</code> option and support for
+         <a href="mongo.connecting.ssl.html" class="link">connecting over SSL</a>.
+        </p>
+        <p class="para">
+         Added <code class="literal">&quot;wTimeoutMS&quot;</code> option, which replaces
+         <code class="literal">&quot;wTimeout&quot;</code>.
+        </p>
+        <p class="para">
+         Emits <strong><code>E_DEPRECATED</code></strong> when
+         <code class="literal">&quot;slaveOkay&quot;</code> or <code class="literal">&quot;timeout&quot;</code> is used.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.5.0</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;authSource&quot;</code>.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.3.4</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;connectTimeoutMS&quot;</code> and
+         <code class="literal">&quot;socketTimeoutMS&quot;</code> options.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.3.0</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;readPreference&quot;</code>,
+         <code class="literal">&quot;readPreferenceTags&quot;</code>, <code class="literal">&quot;w&quot;</code>, and
+         <code class="literal">&quot;wTimeout&quot;</code> options.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.2.0</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;username&quot;</code> and <code class="literal">&quot;password&quot;</code>
+         options.
+        </p>
+        <p class="para">
+         Removed <code class="literal">&quot;persist&quot;</code> option, as all connections are
+         now persistent. It can still be used, but it doesn&#039;t affect anything.
+        </p>
+        <dl>
+
+         
+          <dt>
+
+           <code class="parameter">&quot;persist&quot;</code>
+          </dt>
+
+          <dd>
+
+           <p class="para">
+            If the connection should be persistent. If set, the connection will
+            be persistent. The string representation of the value is used as an
+            ID for the connection, so two instances of
+            <a href="class.mongoclient.html" class="classname">MongoClient</a> that are initialized with
+            <code class="literal">array(&quot;persist&quot; =&gt; &quot;foobar&quot;)</code> will share the same
+            database connection, whereas an instance initialized with
+            <code class="literal">array(&quot;persist&quot; =&gt; &quot;barbaz&quot;)</code> will use a different
+            database connection.
+           </p>
+          </dd>
+
+         
+        </dl>
+
+        <p class="para">
+         The <code class="literal">&quot;replicaSet&quot;</code> option now takes a string, not a
+         boolean.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.0.9</td>
+       <td>Added <code class="literal">&quot;replicaSet&quot;</code> option.</td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.0.2</td>
+       <td>
+        <p class="para">
+         Changed constructor to take an array of options. Pre-1.0.2, the
+         constructor took the following parameters:
+        </p>
+        <dl>
+
+         
+          <dt>
+
+           <code class="parameter">server</code>
+          </dt>
+
+          <dd>
+
+           <p class="para">
+            The server name.
+           </p>
+          </dd>
+
+         
+         
+          <dt>
+
+           <code class="parameter">connect</code>
+          </dt>
+
+          <dd>
+
+           <p class="para">
+            Optional boolean parameter specifying if the constructor should
+            connect to the database before returning.  Defaults to <strong><code>true</code></strong>.
+           </p>
+          </dd>
+
+         
+         
+          <dt>
+
+           <code class="parameter">persistent</code>
+          </dt>
+
+          <dd>
+
+           <p class="para">
+            If the connection should be persistent.
+           </p>
+          </dd>
+
+         
+         
+          <dt>
+
+           <code class="parameter">paired</code>
+          </dt>
+
+          <dd>
+
+           <p class="para">
+            If the connection should be paired.
+           </p>
+          </dd>
+
+         
+        </dl>
+
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

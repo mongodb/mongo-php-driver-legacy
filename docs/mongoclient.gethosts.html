@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Updates status for all associated hosts</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoclient.getconnections.html">« MongoClient::getConnections</a></li>
+      <li style="float: right;"><a href="mongoclient.getreadpreference.html">MongoClient::getReadPreference »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoclient.html">MongoClient</a></li>
+    <li>Updates status for all associated hosts</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoclient.gethosts" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoClient::getHosts</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoClient::getHosts</span> &mdash; <span class="dc-title">Updates status for all associated hosts</span></p>
+
+ </div>
+
+ <div id="mongoclient.gethosts-soft-deprecation-notice" class="soft-deprecation-notice">
+  <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+Alternatives to this method include:</p>
+  <ul class="simplelist">
+   <li class="member"><span class="methodname"><strong>MongoDB\Driver\Manager::getServers()</strong></span></li>
+  </ul>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoclient.gethosts-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoClient::getHosts</strong></span>(): <span class="type">array</span></div>
+
+
+  <p class="para rdfs-comment">
+   This method is only useful with a connection to a replica set. It returns
+   the status of all of the hosts in the set. Without a replica set, it will
+   just return an array with one element containing the host that you are
+   connected to.
+  </p>
+
+  <p class="para">
+   See <a href="mongo.queries.html" class="link">the query section</a> of this manual for
+   information on distributing reads to secondaries.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoclient.gethosts-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoclient.gethosts-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns an array of information about the hosts in the set. Includes each
+   host&#039;s hostname, its health (1 is healthy), its state (1 is primary, 2 is
+   secondary, 0 is anything else), the amount of time it took to ping the
+   server, and when the last ping occurred. For example, on a three-member
+   replica set, it might look something like:
+  </p>
+  <div class="example-contents screen">
+<div class="returnvaluescode"><pre class="returnvaluescode">array(3) {
+  [&quot;A:27017&quot;]=&gt;
+  array(4) {
+    [&quot;host&quot;]=&gt;
+    &quot;A&quot;
+    [&quot;port&quot;]=&gt;
+    27017
+    [&quot;health&quot;]=&gt;
+    int(1)
+    [&quot;state&quot;]=&gt;
+    int(2)
+    [&quot;ping&quot;]=&gt;
+    int(369)
+    [&quot;lastPing&quot;]=&gt;
+    int(1309470644)
+  }
+  [&quot;B:27017&quot;]=&gt;
+  array(4) {
+    [&quot;host&quot;]=&gt;
+    &quot;B&quot;
+    [&quot;port&quot;]=&gt;
+    27017
+    [&quot;health&quot;]=&gt;
+    int(1)
+    [&quot;state&quot;]=&gt;
+    int(1)
+    [&quot;ping&quot;]=&gt;
+    int(139)
+    [&quot;lastPing&quot;]=&gt;
+    int(1309470644)
+  }
+  [&quot;C:27017&quot;]=&gt;
+  array(4) {
+    [&quot;host&quot;]=&gt;
+    &quot;C&quot;
+    [&quot;port&quot;]=&gt;
+    27017
+    [&quot;health&quot;]=&gt;
+    int(1)
+    [&quot;state&quot;]=&gt;
+    int(2)
+    [&quot;ping&quot;]=&gt;
+    int(1012)
+    [&quot;lastPing&quot;]=&gt;
+    int(1309470644)
+  }
+}</pre>
+</div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongoclient.gethosts-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.2.10</td>
+       <td>
+        <p class="para">
+         Support for non-replicasets was added.
+        </p>
+        <p class="para">
+         The returned array elements now also include the
+         <code class="literal">hostname</code> and <code class="literal">port</code>.
+        </p>
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongoclient.gethosts-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="function"><a href="mongoclient.getconnections.html" class="function" rel="rdfs-seeAlso">MongoClient::getConnections()</a> - Return info about all open connections</span></li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

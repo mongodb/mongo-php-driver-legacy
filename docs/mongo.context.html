@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Stream Context Options</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.connecting.persistent.manual.html">« Manually Persistent Connections (version up to 1.1.4 *only*)</a></li>
+      <li style="float: right;"><a href="function.log-cmd-delete.html">log_cmd_delete »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>Stream Context Options</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.context" class="reference">
+ <h1 class="title">Stream Context Options</h1>
+
+ <div class="partintro">
+  <p class="para" id="mongo.context.options">
+   The PHP MongoDB extension provides <a href="" class="link">Stream Context Support</a>
+   using the <a href="" class="link">mongodb</a> context.
+  </p>
+
+  <p class="para">
+   A stream context must be created with <span class="function"><strong>stream_context_create()</strong></span> and passed to the <span class="methodname"><a href="mongoclient.construct.html" class="methodname">MongoClient::__construct()</a></span> before the actual connection to MongoDB is made.
+   It is not possible to apply a stream context to already created streams.
+  </p>
+
+  <p class="para">
+   Additional context options and parameters, such as <a href="" class="link">ssl</a>
+   and <a href="" class="link">notification parameters</a>, are also supported.
+  </p>
+
+  <p class="para">
+   The MongoDB context options provide a rich interface to log network traffic between the driver and the MongoDB servers.
+   This interface can be used to provide query logging, profiler, debuggers, or anything that would need to inspect the underlaying
+   commands and protocol options.
+  </p>
+
+  <div class="simplesect">
+   <h3 class="title">See Also</h3>
+   <ul class="simplelist">
+    <li class="member"><a href="" class="xref"></a></li>
+    <li class="member"><a href="" class="xref"></a></li>
+    <li class="member"><a href="" class="xref"></a></li>
+   </ul>
+  </div>
+
+ </div>
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+<h2>Table of Contents</h2><ul class="chunklist chunklist_reference"><li><a href="function.log-cmd-delete.html">log_cmd_delete</a> — Callback When Deleting Documents</li><li><a href="function.log-cmd-insert.html">log_cmd_insert</a> — Callback When Inserting Documents</li><li><a href="function.log-cmd-update.html">log_cmd_update</a> — Callback When Updating Documents</li><li><a href="function.log-getmore.html">log_getmore</a> — Callback When Retrieving Next Cursor Batch</li><li><a href="function.log-killcursor.html">log_killcursor</a> — Callback When Executing KILLCURSOR operations</li><li><a href="function.log-reply.html">log_reply</a> — Callback When Reading the MongoDB reply</li><li><a href="function.log-write-batch.html">log_write_batch</a> — Callback When Writing Batches</li></ul>
+</div>
+</div></div></body></html>

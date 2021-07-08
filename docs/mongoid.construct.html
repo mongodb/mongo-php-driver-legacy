@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Creates a new id</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongoid.html">« MongoId</a></li>
+      <li style="float: right;"><a href="mongoid.gethostname.html">MongoId::getHostname »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoid.html">MongoId</a></li>
+    <li>Creates a new id</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoid.construct" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoId::__construct</h1>
+  <p class="verinfo">(PECL mongo &gt;= 0.8.0)</p><p class="refpurpose"><span class="refname">MongoId::__construct</span> &mdash; <span class="dc-title">Creates a new id</span></p>
+
+ </div>
+
+ <div id="mongoid.construct-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+Alternatives to this method include:</p>
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><strong>MongoDB\BSON\ObjectId::__construct()</strong></span></li>
+   </ul>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoid.construct-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoId::__construct</strong></span>(<span class="methodparam"><span class="type"><span class="type">string</span>|<span class="type"><a href="class.mongoid.html" class="type MongoId">MongoId</a></span></span> <code class="parameter">$id</code><span class="initializer"> = <strong><code>null</code></strong></span></span>)</div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoid.construct-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">id</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       A string (must be 24 hexadecimal characters) or a
+       <a href="class.mongoid.html" class="classname">MongoId</a> instance.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoid.construct-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns a new id.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongoid.construct-changelog">
+  <h3 class="title">Changelog</h3>
+  <table class="doctable informaltable">
+   
+    <thead>
+     <tr>
+      <th>Version</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+     <tr>
+      <td>PECL mongo 1.4.0</td>
+      <td>
+       An exception is thrown when passed invalid string
+      </td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongoid.construct-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-166">
+   <p><strong>Example #1 <span class="function"><strong>MongoId::__construct()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    This example shows how to create a new id. This is seldom necessary, as the 
+    driver adds an id to arrays automatically before storing them in the 
+    database.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />&nbsp;&nbsp;$id1&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoId</span><span style="color: #007700">();<br />&nbsp;&nbsp;echo&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #0000BB">$id1</span><span style="color: #DD0000">\n"</span><span style="color: #007700">;<br /><br />&nbsp;&nbsp;</span><span style="color: #0000BB">$id2&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoId</span><span style="color: #007700">();<br />&nbsp;&nbsp;echo&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #0000BB">$id2</span><span style="color: #DD0000">\n"</span><span style="color: #007700">;<br /><br />&nbsp;&nbsp;</span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+49a7011a05c677b9a916612a
+49a702d5450046d3d515d10d
+</pre></div>
+   </div>
+  </div>
+  <div class="example" id="example-167">
+   <p><strong>Example #2 Parameter example</strong></p>
+   <div class="example-contents"><p>This example shows how to use a string parameter to initialize a MongoId with a given value.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />&nbsp;&nbsp;$id1&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoId</span><span style="color: #007700">();<br /><br />&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;create&nbsp;a&nbsp;new&nbsp;id&nbsp;from&nbsp;$id1<br />&nbsp;&nbsp;</span><span style="color: #0000BB">$id2&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoId</span><span style="color: #007700">(</span><span style="color: #DD0000">"</span><span style="color: #0000BB">$id1</span><span style="color: #DD0000">"</span><span style="color: #007700">);<br /><br />&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;show&nbsp;that&nbsp;$id1&nbsp;and&nbsp;$id2&nbsp;have&nbsp;the&nbsp;same&nbsp;hexidecimal&nbsp;value<br />&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$id1&nbsp;</span><span style="color: #007700">==&nbsp;</span><span style="color: #0000BB">$id2</span><span style="color: #007700">);<br />&nbsp;&nbsp;</span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+bool(true)
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongoid.construct-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><a href="mongoid.tostring.html" class="methodname" rel="rdfs-seeAlso">MongoId::__toString()</a> - Returns a hexidecimal representation of this id</span></li>
+    <li class="member"><span class="methodname"><a href="mongoid.isvalid.html" class="methodname" rel="rdfs-seeAlso">MongoId::isvalid()</a> - Check if a value is a valid ObjectId</span></li>
+   </ul>
+  </p>
+ </div>
+
+</div></div></div></body></html>

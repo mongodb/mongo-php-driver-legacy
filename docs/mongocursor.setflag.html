@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sets arbitrary flags in case there is no method available the specific flag</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.rewind.html">« MongoCursor::rewind</a></li>
+      <li style="float: right;"><a href="mongocursor.setreadpreference.html">MongoCursor::setReadPreference »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Sets arbitrary flags in case there is no method available the specific flag</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.setflag" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::setFlag</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.2.11)</p><p class="refpurpose"><span class="refname">MongoCursor::setFlag</span> &mdash; <span class="dc-title">Sets arbitrary flags in case there is no method available the specific flag</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.setflag-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::setFlag</strong></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$flag</code></span>, <span class="methodparam"><span class="type">bool</span> <code class="parameter">$set</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+  <p class="para rdfs-comment">
+   The <a href="class.mongocursor.html" class="classname">MongoCursor</a> class has several methods for
+   setting flags on the query object. This method is available in case the
+   MongoDB wire protocol has acquired a new flag, and the driver has not been
+   updated with a method for this new flag. In all other cases, the method
+   should be used. See the &quot;See also&quot; section for available methods.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.setflag-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">flag</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Which flag to set. You can not set flag 6 (EXHAUST) as the driver does
+       not know how to handle them. You will get a warning if you try to use
+       this flag. For available flags, please refer to the wire protocol
+       <a href="https://docs.mongodb.com/meta-driver/latest/legacy/mongodb-wire-protocol/#MongoWireProtocol-OPQUERY" class="link external">&raquo;&nbsp;documentation</a>.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">set</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Whether the flag should be set (<strong><code>true</code></strong>) or unset (<strong><code>false</code></strong>).
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+ 
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.setflag-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns this cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.setflag-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Shows a warning when an unsupport flag is attempted to be set.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongocursor.setflag-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.4.0</td>
+       <td>
+        Support for flag 3 (OPLOG_REPLAY) is added. Versions before 1.4.0
+        would throw a warning saying that the flag is unsupported.
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.setflag-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-151">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::setFlag()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(&nbsp;</span><span style="color: #DD0000">'mongodb://localhost:13000'</span><span style="color: #007700">,&nbsp;array(&nbsp;</span><span style="color: #DD0000">'replSet'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'seta'&nbsp;</span><span style="color: #007700">)&nbsp;);<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">local</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(&nbsp;</span><span style="color: #DD0000">'oplog.rs'&nbsp;</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(&nbsp;array(&nbsp;</span><span style="color: #DD0000">'ns'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'demo.article'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'op'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'i'&nbsp;</span><span style="color: #007700">)&nbsp;);<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setFlag</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">true&nbsp;</span><span style="color: #007700">);&nbsp;</span><span style="color: #FF8000">//&nbsp;sets&nbsp;the&nbsp;tailable&nbsp;flag<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setFlag</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">5</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">true&nbsp;</span><span style="color: #007700">);&nbsp;</span><span style="color: #FF8000">//&nbsp;sets&nbsp;the&nbsp;await&nbsp;data&nbsp;flag<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.setflag-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="function"><a href="mongocursor.tailable.html" class="function" rel="rdfs-seeAlso">MongoCursor::tailable()</a> - Sets whether this cursor will be left open after fetching the last results</span></li>
+    <li class="member"><span class="function"><a href="mongocursor.immortal.html" class="function" rel="rdfs-seeAlso">MongoCursor::immortal()</a> - Sets whether this cursor will timeout</span></li>
+    <li class="member"><span class="function"><a href="mongocursor.awaitdata.html" class="function" rel="rdfs-seeAlso">MongoCursor::awaitData()</a> - Sets whether this cursor will wait for a while for a tailable cursor to return more data</span></li>
+    <li class="member"><span class="function"><a href="mongocursor.partial.html" class="function" rel="rdfs-seeAlso">MongoCursor::partial()</a> - If this query should fetch partial results from mongos if a shard is down</span></li>
+    <li class="member">MongoDB core docs on<a href="https://docs.mongodb.com/meta-driver/latest/legacy/mongodb-wire-protocol/#MongoWireProtocol-OPQUERY" class="link external">&raquo;&nbsp;wire protocol query flags</a></li>
+   </ul>
+  </p>
+ </div>
+
+</div></div></div></body></html>

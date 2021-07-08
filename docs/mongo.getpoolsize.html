@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Get pool size for connection pools</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.construct.html">« Mongo::__construct</a></li>
+      <li style="float: right;"><a href="mongo.getslave.html">Mongo::getSlave »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongo.html">Mongo</a></li>
+    <li>Get pool size for connection pools</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.getpoolsize" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">Mongo::getPoolSize</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.2.0)</p><p class="refpurpose"><span class="refname">Mongo::getPoolSize</span> &mdash; <span class="dc-title">Get pool size for connection pools</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongo.getpoolsize-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><strong>Mongo::getPoolSize</strong></span>(): <span class="type">int</span></div>
+
+
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="simpara">This feature has been <em class="emphasis">DEPRECATED</em> as of version
+    1.2.3. Relying on this feature is highly discouraged.  Please use
+    <span class="function"><a href="mongopool.getsize.html" class="function">MongoPool::getSize()</a></span> instead.
+   </p>
+  </div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongo.getpoolsize-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongo.getpoolsize-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the current pool size.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongo.getpoolsize-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.2.11</td>
+       <td>Emits <strong><code>E_DEPRECATED</code></strong> when used.</td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongo.getpoolsize-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-200">
+   <p><strong>Example #1 Changing pool size</strong></p>
+   <div class="example-contents"><p>
+    This returns the default pool size, sets a new pool size, then prints the
+    new pool size and the pool debugging information.  Note that changing the
+    pool size only affects new connection pools, it does not change old ones.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$connection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">(</span><span style="color: #DD0000">"host1"</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;pool&nbsp;size&nbsp;is&nbsp;-1<br /></span><span style="color: #007700">echo&nbsp;</span><span style="color: #DD0000">"pool&nbsp;size&nbsp;is:&nbsp;"</span><span style="color: #007700">.</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">::</span><span style="color: #0000BB">getPoolSize</span><span style="color: #007700">().</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br /><br />echo&nbsp;</span><span style="color: #DD0000">"setting&nbsp;pool&nbsp;size&nbsp;to&nbsp;200\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">Mongo</span><span style="color: #007700">::</span><span style="color: #0000BB">setPoolSize</span><span style="color: #007700">(</span><span style="color: #0000BB">200</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;pool&nbsp;size&nbsp;is&nbsp;200<br /></span><span style="color: #007700">echo&nbsp;</span><span style="color: #DD0000">"pool&nbsp;size&nbsp;is:&nbsp;"</span><span style="color: #007700">.</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">::</span><span style="color: #0000BB">getPoolSize</span><span style="color: #007700">().</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$conn2&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">(</span><span style="color: #DD0000">"host2"</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;remaining&nbsp;for&nbsp;host1&nbsp;is&nbsp;-2<br />//&nbsp;remaining&nbsp;for&nbsp;host2&nbsp;is&nbsp;199<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">::</span><span style="color: #0000BB">poolDebug</span><span style="color: #007700">());<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongo.getpoolsize-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="function"><a href="mongo.setpoolsize.html" class="function" rel="rdfs-seeAlso">Mongo::setPoolSize()</a> - Set the size for future connection pools</span></li>
+    <li class="member"><span class="function"><a href="mongo.pooldebug.html" class="function" rel="rdfs-seeAlso">Mongo::poolDebug()</a> - Returns information about all connection pools</span></li>
+    <li class="member">The <a href="mongo.connecting.html" class="link">connection</a> documentation.</li>
+   </ul>
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

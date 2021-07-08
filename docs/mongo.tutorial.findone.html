@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Finding Documents using MongoCollection::findOne</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.tutorial.insert.html">« Inserting a Document</a></li>
+      <li style="float: right;"><a href="mongo.tutorial.insert.multiple.html">Adding Multiple Documents »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.tutorial.html">Tutorial</a></li>
+    <li>Finding Documents using MongoCollection::findOne</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.tutorial.findone" class="section">
+   <h2 class="title">
+    Finding Documents using <span class="function"><a href="mongocollection.findone.html" class="function">MongoCollection::findOne()</a></span>
+   </h2>
+   <p class="para">
+    To show that the document we inserted in the previous step is stored in
+    the database, we can do a simple
+    <span class="function"><a href="mongocollection.findone.html" class="function">MongoCollection::findOne()</a></span> operation to get a single
+    document from the collection. This method is useful when there is only one
+    document matching the query or you are only interested in one result.
+   </p>
+   <div class="example" id="mongo.tutorial.findone-example">
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$connection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$connection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">database</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">collectionName</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$document&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">findOne</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">$document&nbsp;</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+    <div class="example-contents"><p>The above example will output:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+array(6) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#8 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;4e2995576803fab768000000&quot;
+  }
+  [&quot;name&quot;]=&gt;
+  string(7) &quot;MongoDB&quot;
+  [&quot;type&quot;]=&gt;
+  string(8) &quot;database&quot;
+  [&quot;count&quot;]=&gt;
+  int(1)
+  [&quot;info&quot;]=&gt;
+  array(2) {
+    [&quot;x&quot;]=&gt;
+    int(203)
+    [&quot;y&quot;]=&gt;
+    int(102)
+  }
+  [&quot;versions&quot;]=&gt;
+  array(3) {
+    [0]=&gt;
+    string(5) &quot;0.9.7&quot;
+    [1]=&gt;
+    string(5) &quot;0.9.8&quot;
+    [2]=&gt;
+    string(5) &quot;0.9.9&quot;
+  }
+}
+</pre></div>
+    </div>
+   </div>
+   <p class="para">
+    Note that there is an <code class="literal">_id</code> field that has been added
+    automatically to your document. <code class="literal">_id</code> is the &quot;primary key&quot;
+    field.  If your document does not specify one, the driver will add one
+    automatically.
+   </p>
+   <p class="para">
+    If you specify your own <code class="literal">_id</code> field, it must be unique to
+    the collection.  See the example here:
+   </p>
+   <div class="example" id="mongo.tutorial.findone-example-2">
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$connection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$connection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">database</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foo</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"_id"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /></span><span style="color: #FF8000">//&nbsp;this&nbsp;will&nbsp;throw&nbsp;an&nbsp;exception<br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foo</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"_id"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;this&nbsp;is&nbsp;fine,&nbsp;as&nbsp;it&nbsp;is&nbsp;a&nbsp;different&nbsp;collection<br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">bar</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"_id"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+   </div>
+   <p class="para">
+    By default the driver will ensure the server has acknowledged the write
+    before returning. You can optionally turn this behaviour off by passing
+    <code class="literal">array(&quot;w&quot; =&gt; 0)</code> as the second argument. This means that
+    the driver should not wait for the database to acknowledge the write and
+    would not throw the duplicate <code class="literal">_id</code> exception.
+   </p>
+   <div class="section" id="mongo.tutorial.findone.seealso">
+    <h2 class="title">See Also</h2>
+    <p class="para">
+     <span class="function"><a href="mongocollection.findone.html" class="function">MongoCollection::findOne()</a></span> for more information about
+     finding data.
+    </p>
+    <p class="para">
+     <a href="class.mongoid.html" class="classname">MongoId</a> goes into more detail on unique ids.
+    </p>
+    <p class="para">
+     The <a href="mongo.writes.html" class="link">writes</a> section covers
+     writes in more depth, and the <a href="mongo.writeconcerns.html" class="xref">Write Concerns</a>
+     chapter goes into details of the various Write Concern options.
+    </p>
+   </div>
+  </div></div></div></body></html>

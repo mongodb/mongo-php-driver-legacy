@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Execute an aggregation pipeline command and retrieve results through a cursor</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.aggregate.html">« MongoCollection::aggregate</a></li>
+      <li style="float: right;"><a href="mongocollection.batchinsert.html">MongoCollection::batchInsert »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Execute an aggregation pipeline command and retrieve results through a cursor</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.aggregatecursor" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::aggregateCursor</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.5.0)</p><p class="refpurpose"><span class="refname">MongoCollection::aggregateCursor</span> &mdash; <span class="dc-title">Execute an aggregation pipeline command and retrieve results through a cursor</span></p>
+
+ </div>
+ <div class="refsect1 description" id="refsect1-mongocollection.aggregatecursor-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::aggregateCursor</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$command</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = ?</span></span>): <span class="type"><a href="class.mongocommandcursor.html" class="type MongoCommandCursor">MongoCommandCursor</a></span></div>
+
+  <p class="para rdfs-comment">
+   With this method you can execute Aggregation Framework pipelines and
+   retrieve the results through a cursor, instead of getting just one document
+   back as you would with <span class="methodname"><a href="mongocollection.aggregate.html" class="methodname">MongoCollection::aggregate()</a></span>.
+   This method returns a <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> object.
+   This cursor object implements the <strong class="classname">Iterator</strong> interface
+   just like the <a href="class.mongocursor.html" class="classname">MongoCursor</a> objects that are returned
+   by the <span class="methodname"><a href="mongocollection.find.html" class="methodname">MongoCollection::find()</a></span> method.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <span class="simpara">
+    The resulting <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> will inherit this
+    collection&#039;s read preference.
+    <span class="methodname"><a href="mongocommandcursor.setreadpreference.html" class="methodname">MongoCommandCursor::setReadPreference()</a></span> may be used
+    to change the read preference before iterating on the cursor.
+   </span>
+  </p></blockquote>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.aggregatecursor-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">pipeline</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The Aggregation Framework pipeline to execute.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+<code class="parameter">options</code></dt>
+
+     <dd>
+
+      <p class="para">Options for the aggregation command. Valid options include:</p>
+      <ul class="itemizedlist">
+       <li class="listitem">
+        <p class="para"><code class="literal">&quot;allowDiskUse&quot;</code></p>
+        <p class="para">Allow aggregation stages to write to temporary files</p>
+       </li>
+       <li class="listitem">
+        <p class="para"><code class="literal">&quot;cursor&quot;</code></p>
+        <p class="para">
+         It is possible to configure how many initial documents the server
+         should return with the first result set. The default initial batch size
+         is <code class="literal">101</code>. You can change it by adding the
+         <code class="literal">batchSize</code> option:
+        </p>
+        <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregateCursor</span><span style="color: #007700">(&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$pipeline</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">"cursor"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">"batchSize"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">4&nbsp;</span><span style="color: #007700">]&nbsp;]<br />);</span>
+</span>
+</code></div>
+        </div>
+
+        <p class="para">
+         This option only configures the size of the first batch. To configure
+         the size of future batches, please use the
+         <span class="methodname"><a href="mongocommandcursor.batchsize.html" class="methodname">MongoCommandCursor::batchSize()</a></span> method on the
+         returned <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> object.
+        </p>
+       </li>
+       <li class="listitem">
+        <p class="para"><code class="literal">&quot;explain&quot;</code></p>
+        <p class="para">
+         Return information on the processing of the pipeline. This option may
+         cause the command to return a result document that is unsuitable for
+         constructing a <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a>. If you need
+         to use this option, you should consider using
+         <span class="methodname"><a href="mongocollection.aggregate.html" class="methodname">MongoCollection::aggregate()</a></span>.
+        </p>
+       </li>
+       <li class="listitem"><p class="para"><code class="literal">&quot;maxTimeMS&quot;</code></p><p class="para">Specifies a cumulative time limit in milliseconds for processing the operation on the server (does not include idle time). If the operation is not completed by the server within the timeout period, a <a href="class.mongoexecutiontimeoutexception.html" class="classname">MongoExecutionTimeoutException</a> will be thrown.</p></li>
+      </ul>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.aggregatecursor-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns a <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> object. Because this
+   implements the <strong class="classname">Iterator</strong> interface you can 
+   iterate over each of the results as returned by the command query. The
+   <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> also implements the
+   <a href="class.mongocursorinterface.html" class="classname">MongoCursorInterface</a> interface which adds the
+   <span class="methodname"><a href="mongocommandcursor.batchsize.html" class="methodname">MongoCommandCursor::batchSize()</a></span>,
+   <span class="methodname"><a href="mongocommandcursor.dead.html" class="methodname">MongoCommandCursor::dead()</a></span>,
+   <span class="methodname"><a href="mongocommandcursor.info.html" class="methodname">MongoCommandCursor::info()</a></span> methods.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.aggregatecursor-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-92">
+   <p><strong>Example #1 <span class="function"><strong>MongoCollection::aggregateCursor()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    Finding all of the distinct values for a key.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">test</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$people&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">people</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">drop</span><span style="color: #007700">();<br /><br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Joe"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">4</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Molly"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">43</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Sally"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">22</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Joe"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">22</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Molly"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">87</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">$ages&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregateCursor</span><span style="color: #007700">(&nbsp;[<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$name'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'points'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$sum'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$points'&nbsp;</span><span style="color: #007700">]&nbsp;]&nbsp;],<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$sort'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'points'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1&nbsp;</span><span style="color: #007700">]&nbsp;],<br />]&nbsp;);<br /><br />foreach&nbsp;(</span><span style="color: #0000BB">$ages&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$person</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #007700">{</span><span style="color: #0000BB">$person</span><span style="color: #007700">[</span><span style="color: #DD0000">'_id'</span><span style="color: #007700">]}</span><span style="color: #DD0000">:&nbsp;</span><span style="color: #007700">{</span><span style="color: #0000BB">$person</span><span style="color: #007700">[</span><span style="color: #DD0000">'points'</span><span style="color: #007700">]}</span><span style="color: #DD0000">\n"</span><span style="color: #007700">;<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen"><br />
+Molly: 130<br />
+Joe: 26<br />
+Sally: 22<br />
+   </div>
+  </div>
+
+  <div class="example" id="example-93">
+   <p><strong>Example #2 <span class="function"><strong>MongoCollection::aggregateCursor()</strong></span>
+   example with different initial batch size</strong></p>
+   <div class="example-contents"><p>
+    Finding all of the distinct values for a key.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">test</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$people&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">people</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">drop</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">/*&nbsp;Insert&nbsp;some&nbsp;sample&nbsp;data&nbsp;*/<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Joe"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">4</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Molly"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">43</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Sally"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">22</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Joe"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">22</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Molly"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"points"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">87</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">/*&nbsp;Run&nbsp;the&nbsp;command&nbsp;cursor&nbsp;*/<br /></span><span style="color: #0000BB">$ages&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregateCursor</span><span style="color: #007700">(<br />&nbsp;&nbsp;&nbsp;&nbsp;[<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$name'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'points'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$sum'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$points'&nbsp;</span><span style="color: #007700">]&nbsp;]&nbsp;],<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">'$sort'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">'points'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1&nbsp;</span><span style="color: #007700">]&nbsp;],<br />&nbsp;&nbsp;&nbsp;&nbsp;],<br />&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;</span><span style="color: #DD0000">"cursor"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;[&nbsp;</span><span style="color: #DD0000">"batchSize"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">4&nbsp;</span><span style="color: #007700">]&nbsp;]<br />);<br /><br />foreach&nbsp;(</span><span style="color: #0000BB">$ages&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$person</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #007700">{</span><span style="color: #0000BB">$person</span><span style="color: #007700">[</span><span style="color: #DD0000">'_id'</span><span style="color: #007700">]}</span><span style="color: #DD0000">:&nbsp;</span><span style="color: #007700">{</span><span style="color: #0000BB">$person</span><span style="color: #007700">[</span><span style="color: #DD0000">'points'</span><span style="color: #007700">]}</span><span style="color: #DD0000">\n"</span><span style="color: #007700">;<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen"><br />
+Molly: 130<br />
+Joe: 26<br />
+Sally: 22<br />
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.aggregatecursor-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><a href="mongodb.command.html" class="methodname" rel="rdfs-seeAlso">MongoDB::command()</a> - Execute a database command</span></li>
+    <li class="member"><a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a></li>
+    <li class="member"><span class="methodname"><a href="mongocommandcursor.batchsize.html" class="methodname" rel="rdfs-seeAlso">MongoCommandCursor::batchSize()</a> - Limits the number of elements returned in one batch</span></li>
+    <li class="member"><span class="methodname"><a href="mongocollection.aggregate.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::aggregate()</a> - Perform an aggregation using the aggregation framework</span></li>
+    <li class="member">The MongoDB <a href="https://docs.mongodb.com/manual/core/aggregation-pipeline/" class="link external">&raquo;&nbsp;aggregation framework</a></li>
+   </ul>
+  </p>
+ </div>
+
+</div></div></div></body></html>

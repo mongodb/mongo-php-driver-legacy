@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Gets an array of MongoCollection objects for all collections in this database</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodb.lasterror.html">« MongoDB::lastError</a></li>
+      <li style="float: right;"><a href="mongodb.preverror.html">MongoDB::prevError »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodb.html">MongoDB</a></li>
+    <li>Gets an array of MongoCollection objects for all collections in this database</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodb.listcollections" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDB::listCollections</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoDB::listCollections</span> &mdash; <span class="dc-title">Gets an array of MongoCollection objects for all collections in this database</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodb.listcollections-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoDB::listCollections</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   Gets a list of all collections in the database and returns them as an array
+   of <a href="class.mongocollection.html" class="classname">MongoCollection</a> objects.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: <span class="simpara">This method will use the <a href="https://docs.mongodb.com/manual/reference/command/listCollections" class="link external">&raquo;&nbsp;listCollections</a> database command when communicating with MongoDB 2.8+. For previous database versions, the method will query the special <code class="literal">system.namespaces</code> collection.</span></p></blockquote>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodb.listcollections-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+   
+    <dt>
+
+     <code class="parameter">options</code>
+    </dt>
+
+    <dd>
+
+     <p class="para">
+      An array of options for listing the collections. Currently available
+      options include:
+      <ul class="itemizedlist">
+       <li class="listitem"><p class="para"><code class="literal">&quot;filter&quot;</code></p><p class="para">Optional query criteria. If provided, this criteria will be used to filter the collections included in the result.</p><p class="para">Relevant fields that may be queried include <code class="literal">&quot;name&quot;</code> (collection name as a string, without the database name prefix) and <code class="literal">&quot;options&quot; (object containing options used to create the collection).</code>.</p><blockquote class="note"><p><strong class="note">Note</strong>: <span class="simpara">MongoDB 2.6 and earlier versions require the <code class="literal">&quot;name&quot;</code> criteria, if specified, to be a string value (i.e. equality match). This is because the driver must prefix the value with the database name in order to query the <code class="literal">system.namespaces</code> collection. Later versions of MongoDB do not have this limitation, as the driver will use the listCollections command.</span></p></blockquote></li>
+       <li class="listitem"><p class="para"><code class="literal">&quot;includeSystemCollections&quot;</code></p><p class="para">Boolean, defaults to <strong><code>false</code></strong>. Determines whether system collections should be included in the result.</p></li>
+      </ul>
+     </p>
+     <p class="para">
+      The following option may be used with MongoDB 2.8+:
+      <ul class="itemizedlist">
+       <li class="listitem"><p class="para"><code class="literal">&quot;maxTimeMS&quot;</code></p><p class="para">Specifies a cumulative time limit in milliseconds for processing the operation on the server (does not include idle time). If the operation is not completed by the server within the timeout period, a <a href="class.mongoexecutiontimeoutexception.html" class="classname">MongoExecutionTimeoutException</a> will be thrown.</p></li>
+      </ul>
+     </p>
+    </dd>
+
+   
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodb.listcollections-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns an array of MongoCollection objects.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongodb.listcollections-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   For MongoDB 2.6 and earlier, <a href="class.mongoexception.html" class="classname">MongoException</a> will be
+   thrown if a non-string value was specified for the
+   <code class="literal">&quot;filter&quot;</code> option&#039;s <code class="literal">&quot;name&quot;</code> criteria.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongodb.listcollections-changelog">
+  <h3 class="title">Changelog</h3>
+  <table class="doctable informaltable">
+   
+    <thead>
+     <tr>
+      <th>Version</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+     <tr>
+      <td>PECL mongo 1.6.0</td>
+      <td>
+       Changed first parameter to be an array of options. Pre-1.6.0, the
+       first parameter was a boolean indicating the
+       <code class="literal">&quot;includeSystemCollections&quot;</code> option.
+      </td>
+     </tr>
+
+     <tr>
+      <td>PECL mongo 1.3.0</td>
+      <td>
+       Added the <code class="parameter">includeSystemCollections</code> parameter.
+      </td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongodb.listcollections-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-84">
+   <p><strong>Example #1 <span class="function"><strong>MongoDB::listCollections()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    The following example demonstrates running count on each collection in a database.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"demo"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collections&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">listCollections</span><span style="color: #007700">();<br /><br />foreach&nbsp;(</span><span style="color: #0000BB">$collections&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #DD0000">"amount&nbsp;of&nbsp;documents&nbsp;in&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #DD0000">:&nbsp;"</span><span style="color: #007700">;<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">count</span><span style="color: #007700">(),&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+...
+amount of documents in demo.pubs: 4
+amount of documents in demo.elephpants: 3
+amount of documents in demo.cities: 22840
+...
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongodb.listcollections-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="function"><a href="mongodb.getcollectionnames.html" class="function" rel="rdfs-seeAlso">MongoDB::getCollectionNames()</a> - Gets an array of names for all collections in this database</span></li>
+    <li class="member"><span class="function"><a href="mongodb.getcollectioninfo.html" class="function" rel="rdfs-seeAlso">MongoDB::getCollectionInfo()</a> - Returns information about collections in this database</span></li>
+   </ul>
+  </p>
+ </div>
+
+</div></div></div></body></html>

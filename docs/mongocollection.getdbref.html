@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Fetches the document pointed to by a database reference</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.get.html">« MongoCollection::__get</a></li>
+      <li style="float: right;"><a href="mongocollection.getindexinfo.html">MongoCollection::getIndexInfo »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Fetches the document pointed to by a database reference</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.getdbref" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::getDBRef</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoCollection::getDBRef</span> &mdash; <span class="dc-title">Fetches the document pointed to by a database reference</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.getdbref-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::getDBRef</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$ref</code></span>): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.getdbref-parameters">
+  <h3 class="title">Parameters</h3>    
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">ref</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       A database reference.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.getdbref-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the database document pointed to by the reference.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.getdbref-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-118">
+   <p><strong>Example #1 <span class="methodname"><strong>MongoCollection::getDBRef()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$playlists&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">playlists</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$myList&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$playlists</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">findOne</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'username'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'me'</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;fetch&nbsp;each&nbsp;song&nbsp;in&nbsp;the&nbsp;playlist<br /></span><span style="color: #007700">foreach&nbsp;(</span><span style="color: #0000BB">$myList</span><span style="color: #007700">[</span><span style="color: #DD0000">'songlist'</span><span style="color: #007700">]&nbsp;as&nbsp;</span><span style="color: #0000BB">$songRef</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$song&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$playlists</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getDBRef</span><span style="color: #007700">(</span><span style="color: #0000BB">$songRef</span><span style="color: #007700">);<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #0000BB">$song</span><span style="color: #007700">[</span><span style="color: #DD0000">'title'</span><span style="color: #007700">]&nbsp;.&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+Dazed and Confused
+Ma na ma na
+Bohemian Rhapsody
+</pre></div>
+   </div>
+   <div class="example-contents screen"> <br />
+    In the above example each $songRef looks something like the following:<br />
+    <div class="cdata"><pre>
+    Array
+    (
+        [$ref] =&gt; songs
+        [$id] =&gt; 49902cde5162504500b45c2c
+    )
+    </pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.getdbref-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><a href="mongocollection.createdbref.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::createDBRef()</a> - Creates a database reference</span></li>
+   </ul>
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Tutorial</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.manual.html">« Manual</a></li>
+      <li style="float: right;"><a href="mongo.tutorial.connecting.html">Making a Connection »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>Tutorial</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.tutorial" class="chapter">
+ <h1>Tutorial</h1>
+<h2>Table of Contents</h2><ul class="chunklist chunklist_chapter"><li><a href="mongo.tutorial.connecting.html">Making a Connection</a></li><li><a href="mongo.tutorial.selectdb.html">Getting a Database</a></li><li><a href="mongo.tutorial.collection.html">Getting A Collection</a></li><li><a href="mongo.tutorial.insert.html">Inserting a Document</a></li><li><a href="mongo.tutorial.findone.html">Finding Documents using MongoCollection::findOne</a></li><li><a href="mongo.tutorial.insert.multiple.html">Adding Multiple Documents</a></li><li><a href="mongo.tutorial.counting.html">Counting Documents in A Collection</a></li><li><a href="mongo.tutorial.cursor.html">Using a Cursor to Get All of the Documents</a></li><li><a href="mongo.tutorial.criteria.html">Setting Criteria for a Query</a></li><li><a href="mongo.tutorial.multi.query.html">Getting A Set of Documents With a Query</a></li><li><a href="mongo.tutorial.indexes.html">Creating An Index</a></li></ul>
+
+ <div class="warning"><strong class="warning">Warning</strong>
+  <p class="para">This extension is deprecated. Instead,
+the <a href="" class="link">MongoDB</a> extension should be
+used.</p>
+ </div>
+ <p class="para">
+  This is the official MongoDB driver for PHP.
+ </p>
+ <p class="para">Here&#039;s a quick code sample that connects, inserts documents, queries for
+  documents, iterates through query results, and disconnects from MongoDB.
+  There are more details on each step in the tutorial below.
+ </p>
+ <div class="example" id="mongo.tutorial.basics">
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;connect<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">//&nbsp;select&nbsp;a&nbsp;database<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">comedy</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;select&nbsp;a&nbsp;collection&nbsp;(analogous&nbsp;to&nbsp;a&nbsp;relational&nbsp;database's&nbsp;table)<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">cartoons</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;add&nbsp;a&nbsp;record<br /></span><span style="color: #0000BB">$document&nbsp;</span><span style="color: #007700">=&nbsp;array(&nbsp;</span><span style="color: #DD0000">"title"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Calvin&nbsp;and&nbsp;Hobbes"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"author"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Bill&nbsp;Watterson"&nbsp;</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$document</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;add&nbsp;another&nbsp;record,&nbsp;with&nbsp;a&nbsp;different&nbsp;"shape"<br /></span><span style="color: #0000BB">$document&nbsp;</span><span style="color: #007700">=&nbsp;array(&nbsp;</span><span style="color: #DD0000">"title"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"XKCD"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"online"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true&nbsp;</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$document</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;find&nbsp;everything&nbsp;in&nbsp;the&nbsp;collection<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">//&nbsp;iterate&nbsp;through&nbsp;the&nbsp;results<br /></span><span style="color: #007700">foreach&nbsp;(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$document</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #0000BB">$document</span><span style="color: #007700">[</span><span style="color: #DD0000">"title"</span><span style="color: #007700">]&nbsp;.&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  <div class="example-contents"><p>The above example will output:</p></div>
+  <div class="example-contents screen">
+<div class="cdata"><pre>
+Calvin and Hobbes
+XKCD
+</pre></div>
+  </div>
+ </div>
+
+
+ 
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</div>
+</div></div></body></html>

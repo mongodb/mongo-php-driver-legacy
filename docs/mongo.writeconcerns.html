@@ -1,0 +1,373 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Write Concerns</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.readpreferences.html">« Read Preferences</a></li>
+      <li style="float: right;"><a href="mongo.sqltomongo.html">SQL to Mongo Mapping Chart »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>Write Concerns</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.writeconcerns" class="chapter">
+ <h1>Write Concerns</h1>
+
+
+ <p class="para">
+  MongoDB provides several different ways of selecting how durable a write to
+  the database should be. These ways are called <code class="literal">Write
+  Concerns</code> and span everything from completely ignoring all errors,
+  to specifically targetting which servers are required to confirm the write
+  before returning the operation.
+ </p>
+ <p class="para">
+  When a write (such as with <span class="methodname"><a href="mongocollection.insert.html" class="methodname">MongoCollection::insert()</a></span>,
+  <span class="methodname"><a href="mongocollection.update.html" class="methodname">MongoCollection::update()</a></span>, and
+  <span class="methodname"><a href="mongocollection.remove.html" class="methodname">MongoCollection::remove()</a></span>) is given a Write Concern
+  option (<code class="literal">&quot;w&quot;</code>) the driver will send the query to MongoDB
+  and piggy back a <code class="literal">getLastError</code> command
+  (<acronym title="getLastError">GLE</acronym>) with the Write Concern option at the same time.
+  The server only returns when the Write Concern condition is verified to be
+  fulfilled, or the query times out (controlled with the
+  <code class="literal">&quot;wtimeout&quot;</code> option, <code class="literal">10000</code> milliseconds
+  is the default).
+ </p>
+
+ <div class="warning"><strong class="warning">Warning</strong>
+  <p class="para">
+   Even though a <code class="literal">getLastError</code> command times out the data
+   will most likely have been written to the primary server and will be
+   replicated to all the secondaries once they have caught up.
+  </p>
+  <p class="para">
+   The typical reasons for a timeout to happen is if you specify a Write
+   Concern which requires confirmation from more servers then you currently
+   have available.
+  </p>
+ </div>
+
+ <p class="para">
+  When using acknowledged writes and the replica set has failed over, the driver
+  will automatically disconnect from the primary, throw an exception, and
+  attempt to find a new primary on the next operation (your application must
+  decide whether or not to retry the operation on the new primary).
+ </p>
+ <p class="para">
+  When using unacknowledged writes (w=0) and the replica set has failed over,
+  there will be no way for the driver to know about the change so it will
+  continue and silently fail to write.
+ </p>
+ <p class="para">
+  The default Write Concern for the <a href="class.mongoclient.html" class="classname">MongoClient</a> is
+  <code class="literal">1</code>: acknowledge write operations.
+ </p>
+
+
+ <p class="para">
+  <table id="mongo.writeconcerns.options" class="doctable table">
+   <caption><strong>Available Write Concerns</strong></caption>
+   
+    <thead>
+     <tr>
+      <th>Write Concern</th>
+      <th>Meaning</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+
+     <tr>
+      <td>w=0</td>
+      <td>Unacknowledged</td>
+      <td>A write will not be followed up with a <acronym title="getLastError">GLE</acronym> call, and therefore not checked (&quot;fire and forget&quot;)</td>
+     </tr>
+
+     <tr>
+      <td>w=1</td>
+      <td>Acknowledged</td>
+      <td>The write will be acknowledged by the server (the primary on replica set configuration)</td>
+     </tr>
+
+     <tr>
+      <td>w=N</td>
+      <td>Replica Set Acknowledged</td>
+      <td>The write will be acknowledged by the primary server, and
+      replicated to <code class="literal">N-1</code> secondaries.</td>
+     </tr>
+
+     <tr>
+      <td>w=majority</td>
+      <td>Majority Acknowledged</td>
+      <td>The write will be acknowledged by the majority of the replica set (including the primary). This is a special reserved string.</td>
+     </tr>
+
+     <tr>
+      <td>w=&lt;tag set&gt;</td>
+      <td>Replica Set Tag Set Acknowledged</td>
+      <td>The write will be acknowledged by members of the entire tag set</td>
+     </tr>
+
+     <tr>
+      <td>j=true</td>
+      <td>Journaled</td>
+      <td>The write will be acknowledged by primary and the journal flushed to disk</td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </p>
+ 
+ <div class="simplesect" id="mongo.writeconcerns.setting">
+  <h3 class="title">Using WriteConcerns</h3>
+  <p class="para">
+   Each of the methods that causes writes
+   (<span class="methodname"><a href="mongocollection.insert.html" class="methodname">MongoCollection::insert()</a></span>,
+   <span class="methodname"><a href="mongocollection.update.html" class="methodname">MongoCollection::update()</a></span>, 
+   <span class="methodname"><a href="mongocollection.remove.html" class="methodname">MongoCollection::remove()</a></span>, and
+   <span class="methodname"><a href="mongocollection.batchinsert.html" class="methodname">MongoCollection::batchInsert()</a></span>) allow an optional
+   argument to send a set of options to the MongoDB server. With this option
+   array you can set the WriteConcern as the following example illustrates:
+  </p>
+  <div class="example" id="example-18">
+   <p><strong>Example #1 Passing a WriteConcern to a write operation</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #FF8000">//&nbsp;Setting&nbsp;w=0&nbsp;for&nbsp;insert:<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$someDoc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Setting&nbsp;w=majority&nbsp;for&nbsp;update:<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">update</span><span style="color: #007700">(</span><span style="color: #0000BB">$someDoc</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$someUpdates</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"majority"</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Setting&nbsp;w=5&nbsp;and&nbsp;j=true&nbsp;for&nbsp;remove:<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">update</span><span style="color: #007700">(</span><span style="color: #0000BB">$someDoc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">5</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"j"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Setting&nbsp;w="AllDCs"&nbsp;for&nbsp;batchInsert:<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">update</span><span style="color: #007700">(array(</span><span style="color: #0000BB">$someDoc1</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$someDoc2</span><span style="color: #007700">),&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"AllDCs"</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <p class="para">
+   Besides setting WriteConcerns per operation as an option argument, it is
+   also possible to set a default WriteConcern in different ways.
+  </p>
+  <p class="para">
+   The first way is through the <a href="" class="link">connection
+   string</a>. The connection string accepts the
+   <code class="literal">journal</code>, <code class="literal">w</code>, and
+   <code class="literal">wTimeoutMS</code> options:
+  </p>
+  <div class="example" id="example-19">
+   <p><strong>Example #2 Connection string WriteConcerns</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://localhost/?journal=true&amp;w=majority&amp;wTimeoutMS=20000"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+
+  <p class="para">
+   Since driver version 1.5 it is also possible to call
+   <span class="methodname"><a href="mongodb.setwriteconcern.html" class="methodname">MongoDB::setWriteConcern()</a></span> and
+   <span class="methodname"><a href="mongocollection.setwriteconcern.html" class="methodname">MongoCollection::setWriteConcern()</a></span> to set a default
+   WriteConcern for all operations created from that specific
+   <a href="class.mongodb.html" class="classname">MongoDB</a> or <a href="class.mongocollection.html" class="classname">MongoCollection</a>
+   object:
+  </p>
+  <div class="example" id="example-20">
+   <p><strong>Example #3 MongoDB::setWriteConcern and MongoCollection::setWriteConcern</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://localhost/"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$d&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">demoDb</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$d</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">demoCollection</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;Set&nbsp;w=3&nbsp;on&nbsp;the&nbsp;database&nbsp;object&nbsp;with&nbsp;a&nbsp;timeout&nbsp;of&nbsp;25000ms<br /></span><span style="color: #0000BB">$d</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setWriteConcern</span><span style="color: #007700">(</span><span style="color: #0000BB">3</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">25000</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;Set&nbsp;w=majority&nbsp;on&nbsp;the&nbsp;collection&nbsp;object&nbsp;without&nbsp;changing&nbsp;the&nbsp;timeout<br /></span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setWriteConcern</span><span style="color: #007700">(</span><span style="color: #DD0000">"majority"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+ <div class="simplesect" id="mongo.writeconcerns.unacknowledged">
+  <h3 class="title">Unacknowledged Writes</h3>
+  <p class="para">
+   By not requiring the server to acknowledge writes the writes can be performed
+   extremely quickly, but you don&#039;t know whether or not they actually succeeded.
+   Writes can fail for a number of reasons: if there are network problems, if a 
+   database server goes down, or if the write was simply invalid (e.g., writing 
+   to a system collection; or duplicate key errors).
+  </p>
+  <p class="para">
+   While developing, you should always use acknowledged writes (to protect against 
+   inadvertent mistakes, such as syntax errors, invalid operators, duplicate key errors and so on).  In 
+   production, unacknowledged writes can be used for &quot;unimportant&quot; data.  Unimportant
+   data varies on application, but it&#039;s generally automatically (instead of user
+   generated) data, such as click tracking or GPS locations, where you can get
+   thousands of records per second.
+  </p>
+  <p class="para">
+   It is strongly recommended that you do an acknowledged write at the end of
+   series of unacknowledged writes. Doing so will not incur in a too large
+   performance penalty, but still allow you to catch any errors that may have
+   occurred.
+  </p>
+  <div class="example" id="mongo.writeconcerns.unacknowledged-example">
+   <p><strong>Example #4 Unacknowledged WriteConcern, followed with Acknowledged Write</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$someDoc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">update</span><span style="color: #007700">(</span><span style="color: #0000BB">$criteria</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$newObj</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$somethingElse</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">));<br />try&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">remove</span><span style="color: #007700">(</span><span style="color: #0000BB">$something</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br />}&nbsp;catch(</span><span style="color: #0000BB">MongoCursorException&nbsp;$e</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">/*&nbsp;Handle&nbsp;the&nbsp;exception..&nbsp;*/<br />&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Here&nbsp;we&nbsp;should&nbsp;issue&nbsp;find()&nbsp;queries&nbsp;on&nbsp;the&nbsp;IDs&nbsp;generated&nbsp;for<br />&nbsp;&nbsp;&nbsp;&nbsp;$somethingElse&nbsp;and&nbsp;$someDoc&nbsp;to&nbsp;verify&nbsp;they&nbsp;got&nbsp;written&nbsp;to&nbsp;the&nbsp;database&nbsp;and<br />&nbsp;&nbsp;&nbsp;&nbsp;attempt&nbsp;to&nbsp;figureout&nbsp;where&nbsp;in&nbsp;the&nbsp;chain&nbsp;something&nbsp;happened.&nbsp;*/<br /></span><span style="color: #007700">}<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>
+    If the last write throws an exception, you know that there&#039;s a problem
+    with your database.
+   </p></div>
+  </div>
+ </div>
+
+ <div class="simplesect" id="mongo.writeconcerns.acknowledged">
+  <h3 class="title">Acknowledged Writes</h3>
+  <p class="para">
+   These type of write operations will make sure that the database has
+   accepted the write operation before returning success. If the write failed,
+   it will throw a <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> with an
+   explanation of the failure. The <a href="class.mongoclient.html" class="classname">MongoClient</a> default
+   behaviour is to acknowledge the write (w=1).
+  </p>
+  <p class="para">
+   It is possible to specify how many members of an replica set have to
+   acknowledge the write (i.e. have it replicated) before the write is deemed
+   acknowledged and the operation returns.
+   <div class="example" id="mongo.writeconcerns.acknowledged-example">
+    <p><strong>Example #5 Acknowledged Writes</strong></p>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #FF8000">//&nbsp;Force&nbsp;acknowledgement&nbsp;from&nbsp;the&nbsp;primary&nbsp;only<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Force&nbsp;acknowledgement&nbsp;from&nbsp;the&nbsp;primary,&nbsp;and&nbsp;one&nbsp;other&nbsp;member&nbsp;of&nbsp;the<br />//&nbsp;replica&nbsp;set<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">2</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;Force&nbsp;acknowledgement&nbsp;from&nbsp;the&nbsp;primary,&nbsp;and&nbsp;six&nbsp;other&nbsp;members&nbsp;of&nbsp;the<br />//&nbsp;replica&nbsp;set&nbsp;(you&nbsp;probably&nbsp;never&nbsp;should&nbsp;do&nbsp;this):<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">7</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+    <div class="example-contents"><p>
+     Keep in mind to select your Write Concern carefully. If you have a
+     replica set with 5 members, and you select Write Concern of
+     <code class="literal">4</code> you will risk the write blocking forever when one
+     member of the replica set goes down for maintenance or a temporary network
+     outage happens.
+    </p></div>
+   </div>
+  </p>
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="para">
+    Passing in a string value for Write Concern has a specific meaning
+    (Replica Set Tag Set Acknowledged). Please be careful of
+    <em class="emphasis">NOT</em> using string values for numbers (i.e.
+    <code class="literal">array(&quot;w&quot; =&gt; &quot;1&quot;)</code>) as it will be treated as a tag set
+    name.
+   </p>
+  </div>
+ </div>
+
+ <div class="simplesect" id="mongo.writeconcerns.majority.acknowledged">
+  <h3 class="title">Majority Acknowledged Writes</h3>
+  <p class="para">
+   Using the special <code class="literal">majority</code> Write Concern option is the
+   recommended way for writes that are required to survive the apocalypse, as
+   it will ensure the majority of your replica set will have the write and will
+   therefore be guaranteed to survive all usual suspect outage scenarios.
+  </p>
+  <div class="example" id="mongo.writeconcerns.majority.acknowledged-example">
+   <p><strong>Example #6 Majority Acknowledged Write</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$someDoc</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"majority"</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+ 
+
+ <div class="simplesect" id="mongo.writeconcerns.journal">
+  <h3 class="title">Journaled Writes</h3>
+  <p class="para">
+   When connecting to a replica set the default Write Concern is only to have
+   the primary server acknowledge the write. There is however a 100ms window
+   until the write gets journaled and flushed to disk. It is possible to force
+   the write to be journaled before acknowledging the write by setting the
+   <code class="literal">j</code> option:
+   <div class="example" id="mongo.writeconcerns.journalled">
+    <p><strong>Example #7 Acknowledged and Journaled Write</strong></p>
+    <div class="example-contents"><p>Forcing journal flush</p></div>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$options&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"j"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">,<br />);<br />try&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$document</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$options</span><span style="color: #007700">);<br />}&nbsp;catch(</span><span style="color: #0000BB">MongoCursorException&nbsp;$e</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">/*&nbsp;handle&nbsp;the&nbsp;exception&nbsp;*/<br /></span><span style="color: #007700">}<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+   </div>
+  </p>
+ </div>
+
+ <div class="simplesect">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">
+    <a href="https://docs.mongodb.com/manual/applications/replication/#replica-set-write-concern" class="link external">&raquo;&nbsp;MongoDB WriteConcern docs</a>
+   </li>
+  </ul>
+ </div>
+
+ <div class="simplesect">
+  <h3 class="title">Changelog</h3>
+  <table class="doctable informaltable">
+   
+    <thead>
+     <tr>
+      <th>Version</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+     <tr>
+      <td>1.3.0</td>
+      <td>
+       <a href="class.mongoclient.html" class="classname">MongoClient</a> was introduced and defaults to
+       <a href="mongo.writeconcerns.html#mongo.writeconcerns.acknowledged" class="link">acknowledged</a> writes.
+       The deprecated <a href="class.mongo.html" class="classname">Mongo</a> defaults to unacknowledged
+       writes.
+      </td>
+     </tr>
+
+     <tr>
+      <td>1.3.0</td>
+      <td>
+       The <code class="literal">&quot;safe&quot;</code> write option has been deprecated and is
+       not available with the new <a href="class.mongoclient.html" class="classname">MongoClient</a> class.
+       Use the <code class="literal">&quot;w&quot;</code> option instead.
+      </td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </div>
+
+</div>
+</div></div></body></html>

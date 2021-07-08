@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Set the size for future connection pools</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongopool.info.html">« MongoPool::info</a></li>
+      <li style="float: right;"><a href="class.mongo.html">Mongo »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongopool.html">MongoPool</a></li>
+    <li>Set the size for future connection pools</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongopool.setsize" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoPool::setSize</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.2.3)</p><p class="refpurpose"><span class="refname">MongoPool::setSize</span> &mdash; <span class="dc-title">Set the size for future connection pools</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongopool.setsize-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><strong>MongoPool::setSize</strong></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$size</code></span>): <span class="type">bool</span></div>
+
+
+  <p class="para rdfs-comment">
+   Sets the max number of connections new pools will be able to create.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongopool.setsize-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">size</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The max number of connections future pools will be able to create.
+       Negative numbers mean that the pool will spawn an infinite number of
+       connections.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongopool.setsize-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the former value of pool size.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongopool.setsize-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.2.11</td>
+       <td>Emits <strong><code>E_DEPRECATED</code></strong> when used.</td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+
+ <div class="refsect1 examples" id="refsect1-mongopool.setsize-examples">
+  <h3 class="title">Examples</h3>
+  <p class="para">
+   <div class="example" id="mongopool.setpoolsize.example.basic">
+    <p><strong>Example #1 <span class="function"><a href="mongo.setpoolsize.html" class="function">Mongo::setPoolSize()</a></span> example</strong></p>
+    <div class="example-contents"><p>
+     If you set the pool size to <code class="literal">n</code> and then create
+     <code class="literal">n</code> connections, attempting to create an
+     <code class="literal">n+1</code>st connection will throw a
+     <a href="class.mongoconnectionexception.html" class="classname">MongoConnectionException</a>.
+    </p></div>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;only&nbsp;allow&nbsp;one&nbsp;connection&nbsp;to&nbsp;a&nbsp;server<br /></span><span style="color: #0000BB">MongoPool</span><span style="color: #007700">::</span><span style="color: #0000BB">setSize</span><span style="color: #007700">(</span><span style="color: #0000BB">1</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;creates&nbsp;one&nbsp;connection&nbsp;to&nbsp;localhost:27017<br /></span><span style="color: #0000BB">$m1&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">();<br /><br /></span><span style="color: #FF8000">//&nbsp;attempt&nbsp;to&nbsp;create&nbsp;a&nbsp;second&nbsp;connection&nbsp;to&nbsp;localhost:27017<br />//&nbsp;only&nbsp;one&nbsp;connection&nbsp;is&nbsp;allowed,&nbsp;so&nbsp;this&nbsp;will&nbsp;throw&nbsp;an&nbsp;exception<br /></span><span style="color: #0000BB">$m2&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">();<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+    <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+Fatal error: Uncaught exception &#039;MongoConnectionException&#039; with message &#039;no more connections in pool&#039; in /path/to/php/script.php:10
+Stack trace:
+#0 /path/to/php/script.php(10): Mongo-&gt;__construct()
+#1 {main}
+  thrown in /path/to/php/script.php on line 10
+</pre></div>
+    </div>
+   </div>
+  </p>
+ </div>
+
+
+
+ <div class="refsect1 seealso" id="refsect1-mongopool.setsize-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="function"><a href="mongopool.getsize.html" class="function" rel="rdfs-seeAlso">MongoPool::getSize()</a> - Get pool size for connection pools</span></li>
+    <li class="member"><span class="function"><a href="mongopool.info.html" class="function" rel="rdfs-seeAlso">MongoPool::info()</a> - Returns information about all connection pools</span></li>
+    <li class="member">The <a href="mongo.connecting.html" class="link">connection</a> documentation.</li>
+   </ul>
+  </p>
+ </div>
+
+</div></div></div></body></html>

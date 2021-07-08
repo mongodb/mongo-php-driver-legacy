@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sets whether this cursor will timeout</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.hint.html">« MongoCursor::hint</a></li>
+      <li style="float: right;"><a href="mongocursor.info.html">MongoCursor::info »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Sets whether this cursor will timeout</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.immortal" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::immortal</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.0.1)</p><p class="refpurpose"><span class="refname">MongoCursor::immortal</span> &mdash; <span class="dc-title">Sets whether this cursor will timeout</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.immortal-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::immortal</strong></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$liveForever</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+  <p class="para rdfs-comment">
+   After remaining idle on the server for some amount of time, cursors, by
+   default, &quot;die.&quot;  This is generally the behavior one wants. The database
+   cleans up a cursor once all of its results have been sent to the client,
+   but if the client doesn&#039;t request all of the results, the cursor will
+   languish there, taking up resources.  Thus, after a few minutes, the cursor
+   &quot;times out&quot; and the database assumes the client has gotten everything it
+   needs and cleans up its the cursor&#039;s resources.
+  </p>
+  <p class="para">
+   If, for some reason, you need a cursor to hang around for a long time, you
+   can prevent the database from cleaning it up by using this method.
+   However, if you make a cursor immortal, you need to iterate through all of
+   its results (or at least until <span class="methodname"><a href="mongocursor.dead.html" class="methodname">MongoCursor::dead()</a></span>
+   returns <strong><code>true</code></strong>) or the cursor will hang around the database
+   <em class="emphasis">forever</em>, taking up resources.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.immortal-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">liveForever</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       If the cursor should be immortal.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+ 
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.immortal-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns this cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.immortal-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if this cursor has started iterating.
+  </p>
+ </div>
+
+</div></div></div></body></html>

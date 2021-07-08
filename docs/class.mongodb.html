@@ -1,0 +1,457 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoDB class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoclient.tostring.html">« MongoClient::__toString</a></li>
+      <li style="float: right;"><a href="mongodb.authenticate.html">MongoDB::authenticate »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.core.html">Core Classes</a></li>
+    <li>The MongoDB class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongodb" class="reference">
+
+ <h1 class="title">The MongoDB class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;=0.9.0)</p>
+
+
+  <div class="section" id="mongodb.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    Instances of this class are used to interact with a database.  To get a
+    database:
+    <div class="example" id="example-64">
+     <p><strong>Example #1 Selecting a database</strong></p>
+     <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();&nbsp;</span><span style="color: #FF8000">//&nbsp;connect<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"example"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+     </div>
+
+    </div>
+    Database names can use almost any character in the ASCII range.  However,
+    they cannot contain &quot; &quot;, &quot;.&quot; or be the empty string.
+    The name &quot;system&quot; is also reserved.
+   </p>
+   <p class="para">
+    A few unusual, but valid, database names: &quot;null&quot;, &quot;[x,y]&quot;, &quot;3&quot;, &quot;\&quot;&quot;, &quot;/&quot;.
+   </p>
+   <p class="para">
+    Unlike collection names, database names may contain &quot;$&quot;.
+   </p>
+  </div>
+
+
+  <div class="section" id="mongodb.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoDB</strong>
+     </span>
+     {</div>
+
+    
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Constants */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongodb.html#mongodb.constants.profilingoff"><var class="varname">PROFILING_OFF</var></a></var><span class="initializer"> = 0</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongodb.html#mongodb.constants.profilingslow"><var class="varname">PROFILING_SLOW</var></a></var><span class="initializer"> = 1</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongodb.html#mongodb.constants.profilingon"><var class="varname">PROFILING_ON</var></a></var><span class="initializer"> = 2</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Fields */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">public</span>
+     <span class="type">int</span>
+      <var class="varname"><a href="class.mongodb.html#mongodb.props.w">$<var class="varname">w</var></a></var><span class="initializer"> = 1</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">public</span>
+     <span class="type">int</span>
+      <var class="varname"><a href="class.mongodb.html#mongodb.props.wtimeout">$<var class="varname">wtimeout</var></a></var><span class="initializer"> = 10000</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Methods */</div>
+    <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><a href="mongodb.authenticate.html" class="methodname">authenticate</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$username</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$password</code></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.command.html" class="methodname">command</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$command</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter reference">&$hash</code><span class="initializer"> = ?</span></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.construct.html" class="methodname">__construct</a></span>(<span class="methodparam"><span class="type"><a href="class.mongoclient.html" class="type MongoClient">MongoClient</a></span> <code class="parameter">$conn</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>)</div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.createcollection.html" class="methodname">createCollection</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = ?</span></span>): <span class="type"><a href="class.mongocollection.html" class="type MongoCollection">MongoCollection</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.createdbref.html" class="methodname">createDBRef</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$collection</code></span>, <span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$document_or_id</code></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.drop.html" class="methodname">drop</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.dropcollection.html" class="methodname">dropCollection</a></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$coll</code></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.execute.html" class="methodname">execute</a></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$code</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$args</code><span class="initializer"> = array()</span></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.forceerror.html" class="methodname">forceError</a></span>(): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.get.html" class="methodname">__get</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>): <span class="type"><a href="class.mongocollection.html" class="type MongoCollection">MongoCollection</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getcollectioninfo.html" class="methodname">getCollectionInfo</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getcollectionnames.html" class="methodname">getCollectionNames</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getdbref.html" class="methodname">getDBRef</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$ref</code></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getgridfs.html" class="methodname">getGridFS</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$prefix</code><span class="initializer"> = &quot;fs&quot;</span></span>): <span class="type"><a href="class.mongogridfs.html" class="type MongoGridFS">MongoGridFS</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getprofilinglevel.html" class="methodname">getProfilingLevel</a></span>(): <span class="type">int</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getreadpreference.html" class="methodname">getReadPreference</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getslaveokay.html" class="methodname">getSlaveOkay</a></span>(): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.getwriteconcern.html" class="methodname">getWriteConcern</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.lasterror.html" class="methodname">lastError</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.listcollections.html" class="methodname">listCollections</a></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.preverror.html" class="methodname">prevError</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.repair.html" class="methodname">repair</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$preserve_cloned_files</code><span class="initializer"> = <strong><code>false</code></strong></span></span>, <span class="methodparam"><span class="type">bool</span> <code class="parameter">$backup_original_files</code><span class="initializer"> = <strong><code>false</code></strong></span></span>): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.reseterror.html" class="methodname">resetError</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.selectcollection.html" class="methodname">selectCollection</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$name</code></span>): <span class="type"><a href="class.mongocollection.html" class="type MongoCollection">MongoCollection</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.setprofilinglevel.html" class="methodname">setProfilingLevel</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$level</code></span>): <span class="type">int</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.setreadpreference.html" class="methodname">setReadPreference</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$read_preference</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$tags</code><span class="initializer"> = ?</span></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.setslaveokay.html" class="methodname">setSlaveOkay</a></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$ok</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.setwriteconcern.html" class="methodname">setWriteConcern</a></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$w</code></span>, <span class="methodparam"><span class="type">int</span> <code class="parameter">$wtimeout</code><span class="initializer"> = ?</span></span>): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><a href="mongodb.--tostring.html" class="methodname">__toString</a></span>(): <span class="type">string</span></div>
+
+   }</div>
+
+
+  </div>
+
+  <div class="section">
+   <h2 class="title">Predefined Constants</h2>
+   <div class="section" id="mongodb.constants.types">
+    <h2 class="title">MongoDB Log Levels</h2>
+    <dl>
+
+
+     
+      <dt id="mongodb.constants.profilingoff"><strong><code>MongoDB::PROFILING_OFF</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Profiling is off.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongodb.constants.profilingslow"><strong><code>MongoDB::PROFILING_SLOW</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Profiling is on for slow operations (&gt;100 ms).
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongodb.constants.profilingon"><strong><code>MongoDB::PROFILING_ON</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Profiling is on for all operations.
+       </span>
+      </dd>
+
+     
+    </dl>
+
+   </div>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Fields</h2>
+   <dl>
+
+    
+     <dt id="mongodb.props.w"><var class="varname">w</var></dt>
+
+     <dt>
+1</dt>
+
+     <dd>
+
+      <p class="para">
+       The number of servers to replicate a change to before returning success.
+       Inherited by instances of <a href="class.mongocollection.html" class="classname">MongoCollection</a> derived
+       from this.  <code class="literal">w</code> functionality is only available in 
+       version 1.5.1+ of the MongoDB server and 1.0.8+ of the driver.
+      </p>
+      <p class="para">
+       <code class="literal">w</code> is used whenever you need to adjust the
+       acknowledgement level
+       (<span class="function"><a href="mongocollection.insert.html" class="function">MongoCollection::insert()</a></span>, 
+       <span class="function"><a href="mongocollection.update.html" class="function">MongoCollection::update()</a></span>, 
+       <span class="function"><a href="mongocollection.remove.html" class="function">MongoCollection::remove()</a></span>, 
+       <span class="function"><a href="mongocollection.save.html" class="function">MongoCollection::save()</a></span>, and
+       <span class="function"><a href="mongocollection.ensureindex.html" class="function">MongoCollection::ensureIndex()</a></span> all support this
+       option). With the default value (1), an acknowledged operation will return once
+       the database server has the operation. If the server goes down before
+       the operation has been replicated to a secondary, it is possible to lose
+       the operation forever. Thus, you can specify <code class="literal">w</code> to be
+       higher than one and guarantee that at least one secondary has the
+       operation before it is considered successful.
+      </p>
+      <p class="para">
+       For example, if <code class="literal">w</code> is 2, the primary and one secondary
+       must have a record of the operation or the driver will throw a
+       <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a>. It is tempting to set
+       <code class="literal">w</code> to the total number of secondaries + primary, but
+       then if one secondary is down the operation will fail and an exception
+       will be thrown, so usually <code class="literal">w=2</code> is safest (primary and
+       one secondary).
+      </p>
+     </dd>
+
+    
+    
+     <dt id="mongodb.props.wtimeout"><var class="varname">wtimeout</var></dt>
+
+     <dt>
+10000</dt>
+
+     <dd>
+
+      <p class="para">
+       The number of milliseconds to wait for <code class="literal">MongoDB::$w</code> 
+       replications to take place.  Inherited by instances of
+       <a href="class.mongocollection.html" class="classname">MongoCollection</a> derived from this. 
+       <code class="literal">w</code> functionality is only available in version 1.5.1+ of
+       the MongoDB server and 1.0.8+ of the driver.
+      </p>
+      <p class="para">
+       Unless <code class="literal">wtimeout</code> is set, the server waits forever for 
+       replicating to <code class="literal">w</code> servers to finish.  The driver 
+       defaults to waiting for 10 seconds, you can change this value to alter
+       its behavior.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </div>
+
+  <div class="section">
+   <h2 class="title">See Also</h2>
+   <p class="para">
+    MongoDB core docs on <a href="https://docs.mongodb.com/manual/reference/glossary/#term-database" class="link external">&raquo;&nbsp;databases</a>.
+   </p>
+  </div>
+ </div>
+
+ 
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+  
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+<h2>Table of Contents</h2><ul class="chunklist chunklist_reference"><li><a href="mongodb.authenticate.html">MongoDB::authenticate</a> — Log in to this database</li><li><a href="mongodb.command.html">MongoDB::command</a> — Execute a database command</li><li><a href="mongodb.construct.html">MongoDB::__construct</a> — Creates a new database</li><li><a href="mongodb.createcollection.html">MongoDB::createCollection</a> — Creates a collection</li><li><a href="mongodb.createdbref.html">MongoDB::createDBRef</a> — Creates a database reference</li><li><a href="mongodb.drop.html">MongoDB::drop</a> — Drops this database</li><li><a href="mongodb.dropcollection.html">MongoDB::dropCollection</a> — Drops a collection [deprecated]</li><li><a href="mongodb.execute.html">MongoDB::execute</a> — Runs JavaScript code on the database server [deprecated]</li><li><a href="mongodb.forceerror.html">MongoDB::forceError</a> — Creates a database error</li><li><a href="mongodb.get.html">MongoDB::__get</a> — Gets a collection</li><li><a href="mongodb.getcollectioninfo.html">MongoDB::getCollectionInfo</a> — Returns information about collections in this database</li><li><a href="mongodb.getcollectionnames.html">MongoDB::getCollectionNames</a> — Gets an array of names for all collections in this database</li><li><a href="mongodb.getdbref.html">MongoDB::getDBRef</a> — Fetches the document pointed to by a database reference</li><li><a href="mongodb.getgridfs.html">MongoDB::getGridFS</a> — Fetches toolkit for dealing with files stored in this database</li><li><a href="mongodb.getprofilinglevel.html">MongoDB::getProfilingLevel</a> — Gets this database's profiling level</li><li><a href="mongodb.getreadpreference.html">MongoDB::getReadPreference</a> — Get the read preference for this database</li><li><a href="mongodb.getslaveokay.html">MongoDB::getSlaveOkay</a> — Get slaveOkay setting for this database</li><li><a href="mongodb.getwriteconcern.html">MongoDB::getWriteConcern</a> — Get the write concern for this database</li><li><a href="mongodb.lasterror.html">MongoDB::lastError</a> — Check if there was an error on the most recent db operation performed</li><li><a href="mongodb.listcollections.html">MongoDB::listCollections</a> — Gets an array of MongoCollection objects for all collections in this database</li><li><a href="mongodb.preverror.html">MongoDB::prevError</a> — Checks for the last error thrown during a database operation</li><li><a href="mongodb.repair.html">MongoDB::repair</a> — Repairs and compacts this database</li><li><a href="mongodb.reseterror.html">MongoDB::resetError</a> — Clears any flagged errors on the database</li><li><a href="mongodb.selectcollection.html">MongoDB::selectCollection</a> — Gets a collection</li><li><a href="mongodb.setprofilinglevel.html">MongoDB::setProfilingLevel</a> — Sets this database's profiling level</li><li><a href="mongodb.setreadpreference.html">MongoDB::setReadPreference</a> — Set the read preference for this database</li><li><a href="mongodb.setslaveokay.html">MongoDB::setSlaveOkay</a> — Change slaveOkay setting for this database</li><li><a href="mongodb.setwriteconcern.html">MongoDB::setWriteConcern</a> — Set the write concern for this database</li><li><a href="mongodb.--tostring.html">MongoDB::__toString</a> — The name of this database</li></ul>
+</div>
+</div></div></body></html>

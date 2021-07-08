@@ -1,0 +1,504 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Perform an aggregation using the aggregation framework</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongocollection.html">« MongoCollection</a></li>
+      <li style="float: right;"><a href="mongocollection.aggregatecursor.html">MongoCollection::aggregateCursor »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Perform an aggregation using the aggregation framework</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.aggregate" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::aggregate</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoCollection::aggregate</span> &mdash; <span class="dc-title">Perform an aggregation using the aggregation framework</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.aggregate-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::aggregate</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$pipeline</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = ?</span></span>): <span class="type">array</span></div>
+
+  <div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::aggregate</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$op</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">...$ops</code></span>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   The MongoDB
+   <a href="https://docs.mongodb.com/manual/core/aggregation-pipeline/" class="link external">&raquo;&nbsp;aggregation framework</a>
+   provides a means to calculate aggregated values without having to use
+   MapReduce. While MapReduce is powerful, it is often more difficult than
+   necessary for many simple aggregation tasks, such as totaling or averaging
+   field values.
+  </p>
+  <p class="para">
+   This method accepts either a variable amount of pipeline operators, or a
+   single array of operators constituting the pipeline.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.aggregate-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+   
+    <dt>
+<code class="parameter">pipeline</code></dt>
+
+    <dd>
+
+     <p class="para">
+      An array of pipeline operators.
+     </p>
+    </dd>
+
+   
+   
+    <dt>
+<code class="parameter">options</code></dt>
+
+    <dd>
+
+     <p class="para">Options for the aggregation command. Valid options include:</p>
+     <ul class="itemizedlist">
+      <li class="listitem">
+       <p class="para"><code class="literal">&quot;allowDiskUse&quot;</code></p>
+       <p class="para">Allow aggregation stages to write to temporary files</p>
+      </li>
+      <li class="listitem">
+       <p class="para"><code class="literal">&quot;cursor&quot;</code></p>
+       <p class="para">
+        Options controlling the creation of the cursor object. This option
+        causes the command to return a result document suitable for constructing
+        a <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a>. If you need to use this
+        option, you should consider using
+        <span class="methodname"><a href="mongocollection.aggregatecursor.html" class="methodname">MongoCollection::aggregateCursor()</a></span>.
+       </p>
+      </li>
+      <li class="listitem">
+       <p class="para"><code class="literal">&quot;explain&quot;</code></p>
+       <p class="para">Return information on the processing of the pipeline.</p>
+      </li>
+      <li class="listitem"><p class="para"><code class="literal">&quot;maxTimeMS&quot;</code></p><p class="para">Specifies a cumulative time limit in milliseconds for processing the operation on the server (does not include idle time). If the operation is not completed by the server within the timeout period, a <a href="class.mongoexecutiontimeoutexception.html" class="classname">MongoExecutionTimeoutException</a> will be thrown.</p></li>
+     </ul>
+    </dd>
+
+   
+  </dl>
+
+  <p class="para">Or</p>
+  <dl>
+
+   
+    <dt>
+<code class="parameter">op</code></dt>
+
+    <dd>
+
+     <p class="para">
+      First pipeline operator.
+     </p>
+    </dd>
+
+   
+   
+    <dt>
+<code class="parameter">ops</code></dt>
+
+    <dd>
+
+     <p class="para">
+      Additional pipeline operators.
+     </p>
+    </dd>
+
+   
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.aggregate-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   The result of the aggregation as an array. The <var class="varname">ok</var> will
+   be set to <code class="literal">1</code> on success, <code class="literal">0</code> on failure.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocollection.aggregate-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   When an error occurs an array with the following keys will be returned:
+   <ul class="itemizedlist">
+    <li class="listitem">
+     <span class="simpara">
+      <var class="varname">errmsg</var> - containing the reason for the failure
+     </span>
+    </li>
+    <li class="listitem">
+     <span class="simpara">
+      <var class="varname">code</var> - the errorcode of the failure
+     </span>
+    </li>
+    <li class="listitem">
+     <span class="simpara">
+      <var class="varname">ok</var> - will be set to 0.
+     </span>
+    </li>
+   </ul>
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongocollection.aggregate-changelog">
+  <h3 class="title">Changelog</h3>
+  <table class="doctable informaltable">
+   
+    <thead>
+     <tr>
+      <th>Version</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+     <tr>
+      <td>PECL mongo 1.5.0</td>
+      <td>
+       Added optional <code class="parameter">options</code> argument
+      </td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.aggregate-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="mongocollection.aggregate.example.basic">
+   <p><strong>Example #1 <span class="methodname"><strong>MongoCollection::aggregate()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    The following example aggregation operation pivots data to create a set of
+    author names grouped by tags applied to an article. Call the aggregation
+    framework by issuing the following command:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"localhost"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"examples"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"article"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$data&nbsp;</span><span style="color: #007700">=&nbsp;array&nbsp;(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'title'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'this&nbsp;is&nbsp;my&nbsp;title'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'author'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'bob'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'posted'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoDate</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'pageViews'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">5</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'tags'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array&nbsp;(&nbsp;</span><span style="color: #DD0000">'fun'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'good'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'fun'&nbsp;</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'comments'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array&nbsp;(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'author'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'joe'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'text'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'this&nbsp;is&nbsp;cool'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'author'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'sam'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'text'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'this&nbsp;is&nbsp;bad'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'other'&nbsp;</span><span style="color: #007700">=&gt;array&nbsp;(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'foo'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">5</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />);<br /></span><span style="color: #0000BB">$d&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$data</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">$ops&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$project'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"author"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"tags"&nbsp;&nbsp;&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'$unwind'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$tags'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"_id"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"tags"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$tags'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"authors"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$addToSet'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$author'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />);<br /></span><span style="color: #0000BB">$results&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregate</span><span style="color: #007700">(</span><span style="color: #0000BB">$ops</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$results</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;result&quot;]=&gt;
+  array(2) {
+    [0]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      array(1) {
+        [&quot;tags&quot;]=&gt;
+        string(4) &quot;good&quot;
+      }
+      [&quot;authors&quot;]=&gt;
+      array(1) {
+        [0]=&gt;
+        string(3) &quot;bob&quot;
+      }
+    }
+    [1]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      array(1) {
+        [&quot;tags&quot;]=&gt;
+        string(3) &quot;fun&quot;
+      }
+      [&quot;authors&quot;]=&gt;
+      array(1) {
+        [0]=&gt;
+        string(3) &quot;bob&quot;
+      }
+    }
+  }
+  [&quot;ok&quot;]=&gt;
+  float(1)
+}
+</pre></div>
+   </div>
+  </div>
+
+  <p class="para">
+   The following examples use the <a href="https://media.mongodb.org/zips.json" class="link external">&raquo;&nbsp;zipcode data set</a>.
+   Use mongoimport to load this data set into your mongod instance.
+  </p>
+
+  <div class="example" id="mongocollection.aggregate.example.zipcode.population">
+   <p><strong>Example #2 <span class="methodname"><strong>MongoCollection::aggregate()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    To return all states with a population greater than 10 million, use the following aggregation operation:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"localhost"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"zips"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$pipeline&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'state'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$state'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'totalPop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$sum'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$pop'</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$match'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'totalPop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$gte'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">10&nbsp;</span><span style="color: #007700">*&nbsp;</span><span style="color: #0000BB">1000&nbsp;</span><span style="color: #007700">*&nbsp;</span><span style="color: #0000BB">1000</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />);<br /></span><span style="color: #0000BB">$out&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregate</span><span style="color: #007700">(</span><span style="color: #0000BB">$pipeline</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$out</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;result&quot;]=&gt;
+  array(7) {
+    [0]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;TX&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(16986510)
+    }
+    [1]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;PA&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(11881643)
+    }
+    [2]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;NY&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(17990455)
+    }
+    [3]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;IL&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(11430602)
+    }
+    [4]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;CA&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(29760021)
+    }
+    [5]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;OH&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(10847115)
+    }
+    [6]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;FL&quot;
+      [&quot;totalPop&quot;]=&gt;
+      int(12937926)
+    }
+  }
+  [&quot;ok&quot;]=&gt;
+  float(1)
+}
+</pre></div>
+   </div>
+  </div>
+
+  <div class="example" id="mongocollection.aggregate.example.zipcode.population.average">
+   <p><strong>Example #3 <span class="methodname"><strong>MongoCollection::aggregate()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    To return the average populations for cities in each state, use the following aggregation operation:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"zips"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$out&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregate</span><span style="color: #007700">(<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'state'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$state'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'city'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$city'&nbsp;</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'pop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$sum'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$pop'&nbsp;</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$_id.state'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'avgCityPop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$avg'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$pop'</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />&nbsp;&nbsp;&nbsp;&nbsp;)<br />);<br /><br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$out</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;result&quot;]=&gt;
+  array(51) {
+    [0]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;DC&quot;
+      [&quot;avgCityPop&quot;]=&gt;
+      float(303450)
+    }
+    [1]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;DE&quot;
+      [&quot;avgCityPop&quot;]=&gt;
+      float(14481.913043478)
+    }
+...
+    [49]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;WI&quot;
+      [&quot;avgCityPop&quot;]=&gt;
+      float(7323.0074850299)
+    }
+    [50]=&gt;
+    array(2) {
+      [&quot;_id&quot;]=&gt;
+      string(2) &quot;WV&quot;
+      [&quot;avgCityPop&quot;]=&gt;
+      float(2759.1953846154)
+    }
+  }
+  [&quot;ok&quot;]=&gt;
+  float(1)
+}
+</pre></div>
+   </div>
+  </div>
+
+  <div class="example" id="mongocollection.aggregate.example.zipcode.explain">
+   <p><strong>Example #4 <span class="methodname"><strong>MongoCollection::aggregate()</strong></span> with command options</strong></p>
+   <div class="example-contents"><p>
+    To return information on how the pipeline will be processed we use the
+    <code class="literal">explain</code> command option:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"zips"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$pipeline&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$group'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'_id'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$state'</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'totalPop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$sum'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'$pop'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$match'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'totalPop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$gte'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">10&nbsp;</span><span style="color: #007700">*&nbsp;</span><span style="color: #0000BB">1000&nbsp;</span><span style="color: #007700">*&nbsp;</span><span style="color: #0000BB">1000</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'$sort'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"totalPop"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />);<br /><br /></span><span style="color: #0000BB">$options&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">"explain"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$out&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">aggregate</span><span style="color: #007700">(</span><span style="color: #0000BB">$pipeline</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$options</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$out</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;stages&quot;]=&gt;
+  array(4) {
+    [0]=&gt;
+    array(1) {
+      [&quot;$cursor&quot;]=&gt;
+      array(3) {
+        [&quot;query&quot;]=&gt;
+        array(0) {
+        }
+        [&quot;fields&quot;]=&gt;
+        array(3) {
+          [&quot;pop&quot;]=&gt;
+          int(1)
+          [&quot;state&quot;]=&gt;
+          int(1)
+          [&quot;_id&quot;]=&gt;
+          int(0)
+        }
+        [&quot;plan&quot;]=&gt;
+        array(4) {
+          [&quot;cursor&quot;]=&gt;
+          string(11) &quot;BasicCursor&quot;
+          [&quot;isMultiKey&quot;]=&gt;
+          bool(false)
+          [&quot;scanAndOrder&quot;]=&gt;
+          bool(false)
+          [&quot;allPlans&quot;]=&gt;
+          array(1) {
+            [0]=&gt;
+            array(3) {
+              [&quot;cursor&quot;]=&gt;
+              string(11) &quot;BasicCursor&quot;
+              [&quot;isMultiKey&quot;]=&gt;
+              bool(false)
+              [&quot;scanAndOrder&quot;]=&gt;
+              bool(false)
+            }
+          }
+        }
+      }
+    }
+    [1]=&gt;
+    array(1) {
+      [&quot;$group&quot;]=&gt;
+      array(2) {
+        [&quot;_id&quot;]=&gt;
+        string(6) &quot;$state&quot;
+        [&quot;totalPop&quot;]=&gt;
+        array(1) {
+          [&quot;$sum&quot;]=&gt;
+          string(4) &quot;$pop&quot;
+        }
+      }
+    }
+    [2]=&gt;
+    array(1) {
+      [&quot;$match&quot;]=&gt;
+      array(1) {
+        [&quot;totalPop&quot;]=&gt;
+        array(1) {
+          [&quot;$gte&quot;]=&gt;
+          int(10000000)
+        }
+      }
+    }
+    [3]=&gt;
+    array(1) {
+      [&quot;$sort&quot;]=&gt;
+      array(1) {
+        [&quot;sortKey&quot;]=&gt;
+        array(1) {
+          [&quot;totalPop&quot;]=&gt;
+          int(-1)
+        }
+      }
+    }
+  }
+  [&quot;ok&quot;]=&gt;
+  float(1)
+}
+</pre></div>
+   </div>
+  </div>
+
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.aggregate-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="methodname"><a href="mongocollection.aggregatecursor.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::aggregateCursor()</a> - Execute an aggregation pipeline command and retrieve results through a cursor</span></li>
+   <li class="member">The MongoDB <a href="https://docs.mongodb.com/manual/core/aggregation-pipeline/" class="link external">&raquo;&nbsp;aggregation framework</a></li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

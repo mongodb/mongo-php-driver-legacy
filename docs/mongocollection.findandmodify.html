@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Update a document and return it</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.find.html">« MongoCollection::find</a></li>
+      <li style="float: right;"><a href="mongocollection.findone.html">MongoCollection::findOne »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Update a document and return it</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.findandmodify" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::findAndModify</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.0)</p><p class="refpurpose"><span class="refname">MongoCollection::findAndModify</span> &mdash; <span class="dc-title">Update a document and return it</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.findandmodify-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::findAndModify</strong></span>(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$query</code></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$update</code><span class="initializer"> = ?</span></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$fields</code><span class="initializer"> = ?</span></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = ?</span></span><br>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+  The findAndModify command atomically modifies and returns a single document.
+  By default, the returned document does not include the modifications made on
+  the update. To return the document with the modifications made on the
+  update, use the <var class="varname">new</var> option.
+  </p>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.findandmodify-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+   
+    <dt>
+<code class="parameter">query</code></dt>
+
+    <dd>
+
+     <p class="para">
+      The query criteria to search for.
+     </p>
+    </dd>
+
+   
+   
+    <dt>
+<code class="parameter">update</code></dt>
+
+    <dd>
+
+     <p class="para">
+      The update criteria.
+     </p>
+    </dd>
+
+   
+   
+    <dt>
+<code class="parameter">fields</code></dt>
+
+    <dd>
+
+     <p class="para">
+      Optionally only return these fields.
+     </p>
+    </dd>
+
+   
+   
+    <dt>
+<code class="parameter">options</code></dt>
+
+    <dd>
+
+     <p class="para">
+      An array of options to apply, such as remove the match document from the
+      DB and return it.
+      <table class="doctable informaltable">
+       
+        <thead>
+         <tr>
+          <th>Option</th>
+          <th>Description</th>
+         </tr>
+
+        </thead>
+
+        <tbody class="tbody">
+         <tr>
+          <td><var class="varname">sort</var> <span class="type">array</span></td>
+          <td>
+           Determines which document the operation will modify if the
+           query selects multiple documents. findAndModify will modify the
+           first document in the sort order specified by this argument.
+          </td>
+         </tr>
+
+         <tr>
+          <td><var class="varname">remove</var> <span class="type">bool</span></td>
+          <td>
+           Optional if <var class="varname">update</var> field exists. When <strong><code>true</code></strong>, removes the selected
+           document. The default is <strong><code>false</code></strong>.
+          </td>
+         </tr>
+
+         <tr>
+          <td><var class="varname">update</var> <span class="type">array</span></td>
+          <td>
+           Optional if <var class="varname">remove</var> field exists.
+           Performs an update of the selected document.
+          </td>
+         </tr>
+
+         <tr>
+          <td><var class="varname">new</var> <span class="type">bool</span></td>
+          <td>
+           Optional. When <strong><code>true</code></strong>, returns the modified document rather than the
+           original. The findAndModify method ignores the <var class="varname">new</var> option for
+           remove operations. The default is <strong><code>false</code></strong>.
+          </td>
+         </tr>
+
+         <tr>
+          <td><var class="varname">upsert</var> <span class="type">bool</span></td>
+          <td>
+           Optional. Used in conjunction with the <var class="varname">update</var> field. When <strong><code>true</code></strong>, the
+           findAndModify command creates a new document if the query returns
+           no documents. The default is false. In MongoDB 2.2, the
+           findAndModify command returns <strong><code>null</code></strong> when upsert is <strong><code>true</code></strong>.
+          </td>
+         </tr>
+
+         <tr>
+          <td></td>
+          <td>
+          </td>
+         </tr>
+
+        </tbody>
+       
+      </table>
+
+     </p>
+    </dd>
+
+   
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.findandmodify-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the original document, or the modified document when
+   <var class="varname">new</var> is set.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocollection.findandmodify-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongoresultexception.html" class="classname">MongoResultException</a> on failure.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.findandmodify-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="mongocollection.findandmodify.example.basic">
+   <p><strong>Example #1 <span class="methodname"><strong>MongoCollection::findAndModify()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$col&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">jobs</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">$col</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Next&nbsp;promo"</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"inprogress"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"priority"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"tasks"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(&nbsp;</span><span style="color: #DD0000">"select&nbsp;product"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"add&nbsp;inventory"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"do&nbsp;placement"</span><span style="color: #007700">),<br />)&nbsp;);<br /><br /></span><span style="color: #0000BB">$col</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Biz&nbsp;report"</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"inprogress"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"priority"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"tasks"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(&nbsp;</span><span style="color: #DD0000">"run&nbsp;sales&nbsp;report"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"email&nbsp;report"&nbsp;</span><span style="color: #007700">)<br />)&nbsp;);<br /><br /></span><span style="color: #0000BB">$col</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Biz&nbsp;report"</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"inprogress"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"priority"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">2</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"tasks"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(&nbsp;</span><span style="color: #DD0000">"run&nbsp;marketing&nbsp;report"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"email&nbsp;report"&nbsp;</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">)<br />);<br /><br /><br /><br /></span><span style="color: #0000BB">$retval&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$col</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">findAndModify</span><span style="color: #007700">(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">"inprogress"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Biz&nbsp;report"</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'$set'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'inprogress'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"started"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoDate</span><span style="color: #007700">())),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">null</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"sort"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"priority"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"new"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;)<br />);<br /><br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$retval</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(6) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#7 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;5091b5b244415e8cc3000002&quot;
+  }
+  [&quot;inprogress&quot;]=&gt;
+  bool(true)
+  [&quot;name&quot;]=&gt;
+  string(10) &quot;Biz report&quot;
+  [&quot;priority&quot;]=&gt;
+  int(2)
+  [&quot;started&quot;]=&gt;
+  object(MongoDate)#8 (2) {
+    [&quot;sec&quot;]=&gt;
+    int(1351726514)
+    [&quot;usec&quot;]=&gt;
+    int(925000)
+  }
+  [&quot;tasks&quot;]=&gt;
+  array(2) {
+    [0]=&gt;
+    string(20) &quot;run marketing report&quot;
+    [1]=&gt;
+    string(12) &quot;email report&quot;
+  }
+}
+</pre></div>
+   </div>
+  </div>
+  <div class="example" id="mongocollection.findandmodify.example.error">
+   <p><strong>Example #2 <span class="methodname"><strong>MongoCollection::findAndModify()</strong></span> error handling</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Mongo</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$col&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">jobs</span><span style="color: #007700">;<br />try&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$retval&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$col</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">findAndModify</span><span style="color: #007700">(<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">"inprogress"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Next&nbsp;promo"</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'$pop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"tasks"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1</span><span style="color: #007700">)),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">"tasks"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$pop'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"stuff"</span><span style="color: #007700">))),<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">"new"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">)<br />&nbsp;&nbsp;&nbsp;&nbsp;);<br />}&nbsp;catch(</span><span style="color: #0000BB">MongoResultException&nbsp;$e</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #0000BB">$e</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getCode</span><span style="color: #007700">(),&nbsp;</span><span style="color: #DD0000">"&nbsp;:&nbsp;"</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$e</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getMessage</span><span style="color: #007700">(),&nbsp;</span><span style="color: #DD0000">"\n"</span><span style="color: #007700">;<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$e</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getDocument</span><span style="color: #007700">());<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+13097 : exception: Unsupported projection option: $pop
+array(3) {
+  [&quot;errmsg&quot;]=&gt;
+  string(46) &quot;exception: Unsupported projection option: $pop&quot;
+  [&quot;code&quot;]=&gt;
+  int(13097)
+  [&quot;ok&quot;]=&gt;
+  float(0)
+}
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.findandmodify-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">The MongoDB <a href="https://docs.mongodb.com/manual/reference/command/findAndModify/" class="link external">&raquo;&nbsp;findAndModify command</a> docs</li>
+  </ul>
+ </div>
+
+
+
+</div></div></div></body></html>

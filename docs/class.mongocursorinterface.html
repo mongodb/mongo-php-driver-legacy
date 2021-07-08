@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoCursorInterface interface</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.valid.html">« MongoCursor::valid</a></li>
+      <li style="float: right;"><a href="mongocursorinterface.batchsize.html">MongoCursorInterface::batchSize »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.core.html">Core Classes</a></li>
+    <li>The MongoCursorInterface interface</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongocursorinterface" class="reference">
+
+ <h1 class="title">The MongoCursorInterface interface</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;=1.5.0)</p>
+
+  
+  <div class="section" id="mongocursorinterface.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    Interface for cursors, which can be used to iterate through results of a
+    database query or command. This interface is implemented by the
+    <a href="class.mongocursor.html" class="classname">MongoCursor</a> and
+    <a href="class.mongocommandcursor.html" class="classname">MongoCommandCursor</a> classes.
+   </p>
+   <blockquote class="note"><p><strong class="note">Note</strong>: 
+    <span class="simpara">
+     Similar to <strong class="classname">Traversable</strong>, this interface cannot be
+     implemented in PHP scripts.
+    </span>
+   </p></blockquote>
+  </div>
+  
+
+  <div class="section" id="mongocursorinterface.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+   
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+    
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoCursorInterface</strong>
+     </span>
+
+     <span class="ooclass">
+      <span class="modifier">extends</span>
+      <strong class="classname">Iterator</strong>
+     </span>
+     {</div>
+    
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Methods */</div>
+    <div class="methodsynopsis dc-description">
+   <span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><a href="mongocursorinterface.batchsize.html" class="methodname">batchSize</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$batchSize</code></span>): <span class="type"><a href="class.mongocursorinterface.html" class="type MongoCursorInterface">MongoCursorInterface</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><a href="mongocursorinterface.dead.html" class="methodname">dead</a></span>(): <span class="type">bool</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><a href="mongocursorinterface.getreadpreference.html" class="methodname">getReadPreference</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><a href="mongocursorinterface.info.html" class="methodname">info</a></span>(): <span class="type">array</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><a href="mongocursorinterface.setreadpreference.html" class="methodname">setReadPreference</a></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$read_preference</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$tags</code><span class="initializer"> = ?</span></span>): <span class="type"><a href="class.mongocursorinterface.html" class="type MongoCursorInterface">MongoCursorInterface</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><a href="mongocursorinterface.timeout.html" class="methodname">timeout</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$ms</code></span>): <span class="type"><a href="class.mongocursorinterface.html" class="type MongoCursorInterface">MongoCursorInterface</a></span></div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Inherited methods */</div>
+    <div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><strong>Iterator::current</strong></span>(): <span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><strong>Iterator::key</strong></span>(): <span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><strong>Iterator::next</strong></span>(): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><strong>Iterator::rewind</strong></span>(): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">abstract</span> <span class="modifier">public</span> <span class="methodname"><strong>Iterator::valid</strong></span>(): <span class="type">bool</span></div>
+
+   }</div>
+   
+  </div>
+
+ </div>
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2>Table of Contents</h2><ul class="chunklist chunklist_reference"><li><a href="mongocursorinterface.batchsize.html">MongoCursorInterface::batchSize</a> — Limits the number of elements returned in one batch</li><li><a href="mongocursorinterface.dead.html">MongoCursorInterface::dead</a> — Checks if there are results that have not yet been sent from the database</li><li><a href="mongocursorinterface.getreadpreference.html">MongoCursorInterface::getReadPreference</a> — Get the read preference for this query</li><li><a href="mongocursorinterface.info.html">MongoCursorInterface::info</a> — Gets information about the cursor's creation and iteration</li><li><a href="mongocursorinterface.setreadpreference.html">MongoCursorInterface::setReadPreference</a> — Set the read preference for this query</li><li><a href="mongocursorinterface.timeout.html">MongoCursorInterface::timeout</a> — Sets a client-side timeout for this query</li></ul>
+</div>
+</div></div></body></html>

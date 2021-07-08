@@ -1,0 +1,354 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Types</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocommandcursor.valid.html">« MongoCommandCursor::valid</a></li>
+      <li style="float: right;"><a href="class.mongoid.html">MongoId »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="book.mongo.html">Mongo</a></li>
+    <li>Types</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.types" class="part">
+
+ <h1>Types</h1>
+<h2>Table of Contents</h2><ul class="chunklist chunklist_part"><li><a href="class.mongoid.html">MongoId</a></li><li><a href="class.mongocode.html">MongoCode</a></li><li><a href="class.mongodate.html">MongoDate</a></li><li><a href="class.mongoregex.html">MongoRegex</a></li><li><a href="class.mongobindata.html">MongoBinData</a></li><li><a href="class.mongoint32.html">MongoInt32</a></li><li><a href="class.mongoint64.html">MongoInt64</a></li><li><a href="class.mongodbref.html">MongoDBRef</a></li><li><a href="class.mongominkey.html">MongoMinKey</a></li><li><a href="class.mongomaxkey.html">MongoMaxKey</a></li><li><a href="class.mongotimestamp.html">MongoTimestamp</a></li></ul>
+
+
+ <div class="partintro">
+  <div class="section">
+   <p class="para">
+    MongoDB allows programmers to save and query for data expressed in all of the
+    basic PHP types, compound types (arrays, associative arrays, and objects), and
+    a half-dozen classes provided by the MongoDB PHP driver (for regular
+    expressions, dates, and other specialized applications).
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Booleans and <strong><code>null</code></strong></h2>
+   <p class="para">
+    <strong><code>true</code></strong>, <strong><code>false</code></strong>, and <strong><code>null</code></strong> can be used as-is.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Numbers</h2>
+   <p class="para">
+    Numbers are distinct from strings in MongoDB: &quot;123&quot; does not match 123.
+    Thus, if you want to make sure numbers are sorted and matched correctly, you
+    must make sure that they are actually saved as numbers.
+   </p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$doc&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">"a"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">123</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"b"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"123"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$doc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"a"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">123</span><span style="color: #007700">));&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;matches<br /></span><span style="color: #0000BB">$doc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"a"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"123"</span><span style="color: #007700">));&nbsp;</span><span style="color: #FF8000">//&nbsp;doesn't&nbsp;match<br /></span><span style="color: #0000BB">$doc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"a"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">123.0</span><span style="color: #007700">));&nbsp;</span><span style="color: #FF8000">//&nbsp;matches<br /></span><span style="color: #0000BB">$doc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"b"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">123</span><span style="color: #007700">));&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;doesn't&nbsp;match<br /></span><span style="color: #0000BB">$doc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"b"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"123"</span><span style="color: #007700">));&nbsp;</span><span style="color: #FF8000">//&nbsp;matches<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <p class="para">
+    As noted above, floating point numbers do compare with/match integer numbers
+    as one would expect.
+   </p>
+   <div class="section">
+    <h2 class="title">Large Numbers</h2>
+    <p class="para">
+     By default, on a 32-bit system, numbers are sent to the database as 32-bit
+     integers. On a 64-bit system, they are sent as 64-bit integers.  For
+     backwards compatibility, all systems deserialize 64-bit integers as floating
+     point numbers.  Floating point numbers are not exact.  If you need exact
+     values, you must tweak your
+     <a href="mongo.configuration.html" class="link">php.ini settings</a>.
+    </p>
+    <p class="para">
+     On a 32-bit system, if <code class="literal">mongo.long_as_object</code> is set,
+     64-bit integers will be returns as <a href="class.mongoint64.html" class="classname">MongoInt64</a>
+     objects.  The integer will be stored in the <code class="literal">value</code> field
+     with perfect precision (as a string). You can also use
+     <a href="class.mongoint64.html" class="classname">MongoInt64</a> to save 64-bit integers on 32-bit
+     machines.
+    </p>
+    <p class="para">
+     On 64-bit systems, you can either set <code class="literal">mongo.long_as_object</code>
+     or set <code class="literal">mongo.native_long</code>.
+     <code class="literal">mongo.native_long</code> will return 64-bit integers and
+     &quot;normal&quot; PHP integers.  You can use <a href="class.mongoint32.html" class="classname">MongoInt32</a> to
+     save 32-bit integers on 64-bit machines.
+    </p>
+    <p class="para">
+     You should set the <code class="literal">mongo.long_as_object</code> and
+     <code class="literal">mongo.native_long</code> behavior that you plan to use, even if
+     it is the default behavior (to protect against future changes to the
+     defaults).
+    </p>
+    <p class="para">
+     See also: <a href="mongo.configuration.html" class="link">php.ini Options</a>,
+     <a href="class.mongoint32.html" class="classname">MongoInt32</a>, <a href="class.mongoint64.html" class="classname">MongoInt64</a>.
+    </p>
+   </div>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Strings</h2>
+   <p class="para">
+    Strings must be UTF-8. Non-UTF-8 strings must either be converted to UTF-8
+    before being sent to the database or saved as binary data.
+   </p>
+   <p class="para">
+    Regular expressions can be used to match strings, and are expressed using the
+    <a href="class.mongoregex.html" class="classname">MongoRegex</a> class.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Binary Data</h2>
+   <p class="para">
+    Non-UTF-8 strings, images, and any other binary data should be sent to the
+    database using the <a href="class.mongobindata.html" class="classname">MongoBinData</a> type.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Dates</h2>
+   <p class="para">
+    Dates can be created using the <a href="class.mongodate.html" class="classname">MongoDate</a> class.  They
+    are stored as milliseconds since the epoch.
+   </p>
+   <p class="para">
+    <a href="class.mongotimestamp.html" class="classname">MongoTimestamp</a> is not for saving dates or timestamps,
+    it is used internally by MongoDB.  Unless you are creating a tool that
+    interacts with the internals of replication or sharding, you should use
+    <a href="class.mongodate.html" class="classname">MongoDate</a>, <em class="emphasis">not</em>
+    <a href="class.mongotimestamp.html" class="classname">MongoTimestamp</a>.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Unique Ids</h2>
+   <p class="para">
+    The driver will automatically create an <code class="literal">_id</code> field before
+    inserting a document (unless one is specified by the user).  This field is an
+    instance of <a href="class.mongoid.html" class="classname">MongoId</a> (called &quot;ObjectId&quot; in most other
+    languages).
+   </p>
+   <p class="para">
+    These ids are 12 bytes long and composed of:
+    <ul class="itemizedlist">
+     <li class="listitem">
+      <p class="para">4 bytes of timestamp</p>
+      <p class="para">
+       No two records can have the same id if they were inserted at different
+       times.
+      </p>
+     </li>
+     <li class="listitem">
+      <p class="para">3 bytes machine id</p>
+      <p class="para">
+       No two records can have the same id if they were inserted on different
+       machines
+      </p>
+     </li>
+     <li class="listitem">
+      <p class="para">2 bytes thread id</p>
+      <p class="para">
+       No two records can have the same id if they were inserted by different
+       threads running on the same machine.
+      </p>
+     </li>
+     <li class="listitem">
+      <p class="para">3 bytes incrementing value</p>
+      <p class="para">
+       Each time an id is created, a global counter is incremented and used
+       as the increment value of the next id.
+      </p>
+     </li>
+    </ul>
+    Thus, no two records can have the same id unless a single process on a
+    single machine managed to insert 256^3 (over 16 million) documents in
+    one second, overflowing the increment field.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">JavaScript</h2>
+   <p class="para">
+    MongoDB comes with a JavaScript engine, so you can embed JavaScript in
+    queries (using a $where clause), send it directly to the database to be
+    executed, and use it to perform aggregations.
+   </p>
+   <p class="para">
+    For security, use <a href="class.mongocode.html" class="classname">MongoCode</a>&#039;s <code class="literal">scope</code>
+    field to use PHP variables in JavaScript.  Code that does not require
+    external values can either use <a href="class.mongocode.html" class="classname">MongoCode</a> or just be
+    a string.  See the
+    <a href="mongo.security.html" class="link">section on security</a> for more
+    information about sending JavaScript to the database.
+   </p>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Arrays and Objects</h2>
+
+   <p class="para">
+    Arrays and objects can also be saved to the database.  An array with ascending
+    numeric keys will be saved as a an array, anything else will be saved as an
+    object.
+   </p>
+
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;$scores&nbsp;will&nbsp;be&nbsp;saved&nbsp;as&nbsp;an&nbsp;array<br /></span><span style="color: #0000BB">$scores&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #0000BB">98</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">100</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">73</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">85</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"scores"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$scores</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;$scores&nbsp;will&nbsp;be&nbsp;saved&nbsp;as&nbsp;an&nbsp;object<br /></span><span style="color: #0000BB">$scores&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">"quiz1"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">98</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"midterm"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">100</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"quiz2"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">73</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"final"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">85</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"scores"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$scores</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+
+   <p class="para">
+    If you query for these objects using the database shell, they will look like:
+    <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">&gt; db.students.find()
+{ &quot;_id&quot; : ObjectId(&quot;4b06beada9ad6390dab17c43&quot;), &quot;scores&quot; : [ 98, 100, 73, 85 ] }
+{ &quot;_id&quot; : ObjectId(&quot;4b06bebea9ad6390dab17c44&quot;), &quot;scores&quot; : { &quot;quiz1&quot; : 98, &quot;midterm&quot; : 100, &quot;quiz2&quot; : 73, &quot;final&quot; : 85 } }</pre>
+</div>
+    </div>
+
+   </p>
+
+   <p class="para">
+    The database can also save arbitrary PHP objects (although they will be
+    returned as associative arrays).  The fields are used for the key/value
+    pairs.  For example, a blog post might look like:
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;the&nbsp;blog&nbsp;post&nbsp;class<br />&nbsp;&nbsp;</span><span style="color: #007700">class&nbsp;</span><span style="color: #0000BB">Post&nbsp;</span><span style="color: #007700">{<br /><br />&nbsp;&nbsp;var&nbsp;</span><span style="color: #0000BB">$author</span><span style="color: #007700">;<br />&nbsp;&nbsp;var&nbsp;</span><span style="color: #0000BB">$content</span><span style="color: #007700">;<br />&nbsp;&nbsp;var&nbsp;</span><span style="color: #0000BB">$comments&nbsp;</span><span style="color: #007700">=&nbsp;array();<br />&nbsp;&nbsp;var&nbsp;</span><span style="color: #0000BB">$date</span><span style="color: #007700">;<br /><br />&nbsp;&nbsp;public&nbsp;function&nbsp;</span><span style="color: #0000BB">__construct</span><span style="color: #007700">(</span><span style="color: #0000BB">$author</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$content</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;</span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">author&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$author</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">content&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$content</span><span style="color: #007700">;<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">date&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoDate</span><span style="color: #007700">();<br />&nbsp;&nbsp;}<br /><br />&nbsp;&nbsp;public&nbsp;function&nbsp;</span><span style="color: #0000BB">setTitle</span><span style="color: #007700">(</span><span style="color: #0000BB">$title</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">title&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$title</span><span style="color: #007700">;<br />&nbsp;&nbsp;}<br />}<br /><br /></span><span style="color: #FF8000">//&nbsp;create&nbsp;a&nbsp;simple&nbsp;blog&nbsp;post&nbsp;and&nbsp;insert&nbsp;it&nbsp;into&nbsp;the&nbsp;database<br /></span><span style="color: #0000BB">$post1&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Post</span><span style="color: #007700">(</span><span style="color: #DD0000">"Adam"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"This&nbsp;is&nbsp;a&nbsp;blog&nbsp;post"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$blog</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$post1</span><span style="color: #007700">);<br /><br /><br /></span><span style="color: #FF8000">//&nbsp;there&nbsp;is&nbsp;nothing&nbsp;restricting&nbsp;the&nbsp;type&nbsp;of&nbsp;the&nbsp;"author"&nbsp;field,&nbsp;so&nbsp;we&nbsp;can&nbsp;make<br />//&nbsp;it&nbsp;a&nbsp;nested&nbsp;object<br /></span><span style="color: #0000BB">$author&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">"name"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Fred"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"karma"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">42</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$post2&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">Post</span><span style="color: #007700">(</span><span style="color: #0000BB">$author</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"This&nbsp;is&nbsp;another&nbsp;blog&nbsp;post."</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;we&nbsp;create&nbsp;an&nbsp;extra&nbsp;field&nbsp;by&nbsp;setting&nbsp;the&nbsp;title<br /></span><span style="color: #0000BB">$post2</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setTitle</span><span style="color: #007700">(</span><span style="color: #DD0000">"Second&nbsp;Post"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$blog</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$post2</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+   </p>
+
+   <p class="para">
+    From the database shell, this will look something like:
+    <div class="example-contents">
+<div class="shellcode"><pre class="shellcode">&gt; db.blog.find()
+{ &quot;_id&quot; : ObjectId(&quot;4b06c263edb87a281e09dad8&quot;), &quot;author&quot; : &quot;Adam&quot;, &quot;content&quot; : &quot;This is a blog post&quot;, &quot;comments&quot; : [ ], &quot;date&quot; : &quot;Fri Nov 20 2009 11:22:59 GMT-0500 (EST)&quot; }
+{ &quot;_id&quot; : ObjectId(&quot;4b06c282edb87a281e09dad9&quot;), &quot;author&quot; : { &quot;name&quot; : &quot;Fred&quot;, &quot;karma&quot; : 42 }, &quot;content&quot; : &quot;This is a blog post&quot;, &quot;comments&quot; : [ ], &quot;date&quot; : &quot;Fri Nov 20 2009 11:23:30 GMT-0500 (EST)&quot;, &quot;title&quot; : &quot;Second Post&quot; }</pre>
+</div>
+    </div>
+
+   </p>
+
+   <p class="para">
+    The driver will not detect reference loops in arrays and objects.  For
+    example, this will give a fatal error:
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$GLOBALS</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+    <div class="example-contents">
+<div class="txtcode"><pre class="txtcode">Fatal error: Nesting level too deep - recursive dependency?</pre>
+</div>
+    </div>
+
+    If you need to insert documents that may have recursive dependency, you have
+    to check for it yourself before passing it to the driver.
+   </p>
+  </div>
+ </div>
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+</div>
+</div></div></body></html>

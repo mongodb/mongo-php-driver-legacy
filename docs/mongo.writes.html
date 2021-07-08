@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Writes</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="function.log-write-batch.html">« log_write_batch</a></li>
+      <li style="float: right;"><a href="mongo.queries.html">Querying »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>Writes</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.writes" class="chapter">
+ <h1>Writes</h1>
+
+ <div class="section">
+  <h2 class="title">Updating Nested Objects</h2>
+
+  <p class="para">
+   Suppose we wish to change the name of a comment&#039;s author in this document:
+
+   <div class="example-contents">
+<div class="javascriptcode"><pre class="javascriptcode">{ 
+    &quot;_id&quot; : ObjectId(&quot;4b06c282edb87a281e09dad9&quot;), 
+    &quot;content&quot; : &quot;this is a blog post.&quot;,
+    &quot;comments&quot; : 
+    [
+        {
+            &quot;author&quot; : &quot;Mike&quot;,
+            &quot;comment&quot; : &quot;I think that blah blah blah...&quot;,
+        },
+        {
+            &quot;author&quot; : &quot;John&quot;,
+            &quot;comment&quot; : &quot;I disagree.&quot;
+        }
+    ]
+}</pre>
+</div>
+   </div>
+
+
+   In order to change an inner field, we use $set (so that all of the other 
+   fields are not removed!) with the index of comment to change:
+
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$blog</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">update</span><span style="color: #007700">(</span><span style="color: #0000BB">$criteria</span><span style="color: #007700">,&nbsp;array(</span><span style="color: #DD0000">'$set'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"comments.1"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"author"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"Jim"</span><span style="color: #007700">))));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </p>
+ </div>
+
+ <div class="section">
+  <h2 class="title">The Positional Operator</h2>
+  <p class="para">
+   The positional operator <code class="literal">$</code> is useful for updating objects 
+   that are in arrays.  In the example above, for instance, suppose that we did
+   not know the index of the comment that we needed to change, merely that we
+   needed to change &quot;John&quot; to &quot;Jim&quot;.  We can use <code class="literal">$</code> to do so.
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$blog</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">update</span><span style="color: #007700">(<br />&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'comments.author'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'John'</span><span style="color: #007700">),&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'$set'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'comments.$.author'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'Jim'</span><span style="color: #007700">)));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+ </div>
+
+</div>
+</div></div></body></html>

@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Get the read preference for this query</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.getnext.html">« MongoCursor::getNext</a></li>
+      <li style="float: right;"><a href="mongocursor.hasnext.html">MongoCursor::hasNext »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Get the read preference for this query</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.getreadpreference" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::getReadPreference</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.3.3)</p><p class="refpurpose"><span class="refname">MongoCursor::getReadPreference</span> &mdash; <span class="dc-title">Get the read preference for this query</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.getreadpreference-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::getReadPreference</strong></span>(): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.getreadpreference-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.getreadpreference-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">This function returns an array describing the read preference. The array contains the values <code class="literal">type</code> for the string read preference mode (corresponding to the <a href="class.mongoclient.html" class="classname">MongoClient</a> constants), and <code class="literal">tagsets</code> containing a list of all tag set criteria. If no tag sets were specified, <code class="literal">tagsets</code> will not be present in the array.</p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.getreadpreference-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-148">
+   <p><strong>Example #1 <span class="methodname"><strong>MongoCursor::getReadPreference()</strong></span> return value example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">test</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">users</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">setReadPreference</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">::</span><span style="color: #0000BB">RP_SECONDARY</span><span style="color: #007700">,&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'dc'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'east'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'use'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'reporting'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(</span><span style="color: #DD0000">'dc'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'west'</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;array(),<br />));<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getReadPreference</span><span style="color: #007700">());<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;type&quot;]=&gt;
+  string(9) &quot;secondary&quot;
+  [&quot;tagsets&quot;]=&gt;
+  array(3) {
+    [0]=&gt;
+    array(2) {
+      [&quot;dc&quot;]=&gt;
+      string(4) &quot;east&quot;
+      [&quot;use&quot;]=&gt;
+      string(9) &quot;reporting&quot;
+    }
+    [1]=&gt;
+    array(1) {
+      [&quot;dc&quot;]=&gt;
+      string(7) &quot;west&quot;
+    }
+    [2]=&gt;
+    array(0) {
+    }
+  }
+}
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.getreadpreference-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">The <a href="mongo.readpreferences.html" class="link">read preferences</a> documentation.</li>
+   <li class="member"><span class="function"><a href="mongocursor.setreadpreference.html" class="function" rel="rdfs-seeAlso">MongoCursor::setReadPreference()</a> - Set the read preference for this query</span></li>
+   <li class="member"><span class="function"><a href="mongocursorinterface.getreadpreference.html" class="function" rel="rdfs-seeAlso">MongoCursorInterface::getReadPreference()</a> - Get the read preference for this query</span></li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

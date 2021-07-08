@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sets this database's profiling level</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodb.selectcollection.html">« MongoDB::selectCollection</a></li>
+      <li style="float: right;"><a href="mongodb.setreadpreference.html">MongoDB::setReadPreference »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodb.html">MongoDB</a></li>
+    <li>Sets this database's profiling level</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodb.setprofilinglevel" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDB::setProfilingLevel</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoDB::setProfilingLevel</span> &mdash; <span class="dc-title">Sets this database&#039;s profiling level</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodb.setprofilinglevel-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoDB::setProfilingLevel</strong></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$level</code></span>): <span class="type">int</span></div>
+
+  <p class="para rdfs-comment">
+   This changes the current database profiling level.
+  </p>
+  <p class="para">
+   This function is equivalent to running:
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #007700">public&nbsp;function&nbsp;</span><span style="color: #0000BB">setProfilingLevel</span><span style="color: #007700">(</span><span style="color: #0000BB">$level</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;</span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">command</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'profile'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$level</span><span style="color: #007700">));<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </p>
+  <p class="para">
+   The options for level are 0 (off), 1 (queries &gt; 100ms), and 2 (all queries).
+   If you would like to profile queries that take longer than another time 
+   period, use the database command and pass it a second option, the number of
+   milliseconds.  For example, to profile all queries that take longer than one
+   second, run:
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$result&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">command</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'profile'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'slowms'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1000</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </p>
+  <p class="para">
+   Profiled queries will appear in the <code class="literal">system.profile</code> 
+   collection of this database.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodb.setprofilinglevel-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">level</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Profiling level.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodb.setprofilinglevel-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns the previous profiling level.
+  </p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongodb.setprofilinglevel-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">MongoDB core docs on <a href="https://docs.mongodb.com/manual/tutorial/manage-the-database-profiler/" class="link external">&raquo;&nbsp;profiling</a></li>
+   <li class="member"><span class="methodname"><a href="mongodb.getprofilinglevel.html" class="methodname" rel="rdfs-seeAlso">MongoDB::getProfilingLevel()</a> - Gets this database's profiling level</span></li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

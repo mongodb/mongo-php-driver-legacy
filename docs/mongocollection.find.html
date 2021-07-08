@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Queries this collection, returning a MongoCursor
+  for the result set</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.ensureindex.html">« MongoCollection::ensureIndex</a></li>
+      <li style="float: right;"><a href="mongocollection.findandmodify.html">MongoCollection::findAndModify »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Queries this collection, returning a MongoCursor
+  for the result set</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.find" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::find</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoCollection::find</span> &mdash; <span class="dc-title">Queries this collection, returning a <a href="class.mongocursor.html" class="classname">MongoCursor</a>
+  for the result set</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.find-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::find</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$query</code><span class="initializer"> = array()</span></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$fields</code><span class="initializer"> = array()</span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.find-parameters">
+  <h3 class="title">Parameters</h3>  
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">query</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The fields for which to search. MongoDB&#039;s query language is quite
+       extensive. The PHP driver will in almost all cases pass the query
+       straight through to the server, so reading the MongoDB core docs on
+       <a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/" class="link external">&raquo;&nbsp;find</a> is a good idea.
+      </p>
+      <div class="warning"><strong class="warning">Warning</strong>
+       <p class="para">
+        Please make sure that for all special query operators (starting with
+        <code class="literal">$</code>) you use single quotes so that PHP doesn&#039;t try to
+        replace <code class="literal">&quot;$exists&quot;</code> with the value of the variable
+        <code class="literal">$exists</code>.
+       </p>
+      </div>
+     </dd>
+
+       
+    
+     <dt>
+
+      <code class="parameter">fields</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Fields of the results to return. The array is in the format
+       <code class="literal">array(&#039;fieldname&#039; =&gt; true, &#039;fieldname2&#039; =&gt; true)</code>.
+       The <code class="literal">_id</code> field is always returned.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.find-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns a cursor for the search results.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.find-examples">
+  <h3 class="title">Examples</h3>
+   <div class="example" id="example-109">
+   <p><strong>Example #1 <span class="function"><strong>MongoCollection::find()</strong></span> example</strong></p>
+   <div class="example-contents"><p>This example demonstrates basic search options.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">'test'</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCollection</span><span style="color: #007700">(</span><span style="color: #0000BB">$db</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'produce'</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;search&nbsp;for&nbsp;fruits<br /></span><span style="color: #0000BB">$fruitQuery&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">'Type'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'Fruit'</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(</span><span style="color: #0000BB">$fruitQuery</span><span style="color: #007700">);<br />foreach&nbsp;(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$doc</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">);<br />}<br /><br /></span><span style="color: #FF8000">//&nbsp;search&nbsp;for&nbsp;produce&nbsp;that&nbsp;is&nbsp;sweet.&nbsp;Taste&nbsp;is&nbsp;a&nbsp;child&nbsp;of&nbsp;Details.&nbsp;<br /></span><span style="color: #0000BB">$sweetQuery&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">'Details.Taste'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'Sweet'</span><span style="color: #007700">);<br />echo&nbsp;</span><span style="color: #DD0000">"Sweet\n"</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(</span><span style="color: #0000BB">$sweetQuery</span><span style="color: #007700">);<br />foreach&nbsp;(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$doc</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">);<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(4) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#7 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;50a87dd084f045a19b220dd6&quot;
+  }
+  [&quot;Name&quot;]=&gt;
+  string(5) &quot;Apple&quot;
+  [&quot;Type&quot;]=&gt;
+  string(5) &quot;Fruit&quot;
+  [&quot;Details&quot;]=&gt;
+  array(2) {
+    [&quot;Taste&quot;]=&gt;
+    string(5) &quot;Sweet&quot;
+    [&quot;Colour&quot;]=&gt;
+    string(3) &quot;Red&quot;
+  }
+}
+array(4) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#8 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;50a87de084f045a19b220dd7&quot;
+  }
+  [&quot;Name&quot;]=&gt;
+  string(5) &quot;Lemon&quot;
+  [&quot;Type&quot;]=&gt;
+  string(5) &quot;Fruit&quot;
+  [&quot;Details&quot;]=&gt;
+  array(2) {
+    [&quot;Taste&quot;]=&gt;
+    string(4) &quot;Sour&quot;
+    [&quot;Colour&quot;]=&gt;
+    string(5) &quot;Green&quot;
+  }
+}
+
+Sweet:
+array(4) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#7 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;50a87dd084f045a19b220dd6&quot;
+  }
+  [&quot;Name&quot;]=&gt;
+  string(5) &quot;Apple&quot;
+  [&quot;Type&quot;]=&gt;
+  string(5) &quot;Fruit&quot;
+  [&quot;Details&quot;]=&gt;
+  array(2) {
+    [&quot;Taste&quot;]=&gt;
+    string(5) &quot;Sweet&quot;
+    [&quot;Colour&quot;]=&gt;
+    string(3) &quot;Red&quot;
+  }
+}
+</pre></div>
+   </div>
+   <div class="example-contents"><p>
+     See <a href="class.mongocursor.html" class="classname">MongoCursor</a> for more information how to work with cursors.
+   </p></div>
+  </div>
+  <div class="example" id="example-110">
+   <p><strong>Example #2 <span class="function"><strong>MongoCollection::find()</strong></span> example</strong></p>
+   <div class="example-contents"><p>This example demonstrates how to search for a range.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">'test'</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCollection</span><span style="color: #007700">(</span><span style="color: #0000BB">$db</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'phpmanual'</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;search&nbsp;for&nbsp;documents&nbsp;where&nbsp;5&nbsp;&lt;&nbsp;x&nbsp;&lt;&nbsp;20<br /></span><span style="color: #0000BB">$rangeQuery&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">'x'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(&nbsp;</span><span style="color: #DD0000">'$gt'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">5</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'$lt'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">20&nbsp;</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(</span><span style="color: #0000BB">$rangeQuery</span><span style="color: #007700">);<br />foreach&nbsp;(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$doc</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">);<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#10 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;4ebc3e3710b89f2349000000&quot;
+  }
+  [&quot;x&quot;]=&gt;
+  int(12)
+}
+array(2) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#11 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;4ebc3e3710b89f2349000001&quot;
+  }
+  [&quot;x&quot;]=&gt;
+  int(12)
+}
+</pre></div>
+   </div>
+   <div class="example-contents"><p>
+     See <a href="class.mongocursor.html" class="classname">MongoCursor</a> for more information how to work with cursors.
+   </p></div>
+  </div>
+  <div class="example" id="example-111">
+   <p><strong>Example #3 <span class="function"><strong>MongoCollection::find()</strong></span> example using $where</strong></p>
+   <div class="example-contents"><p>This example demonstrates how to search a collection using javascript code to reduce the resultset.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">'test'</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCollection</span><span style="color: #007700">(</span><span style="color: #0000BB">$db</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'phpmanual'</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$js&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #DD0000">"function()&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;this.name&nbsp;==&nbsp;'Joe'&nbsp;||&nbsp;this.age&nbsp;==&nbsp;50;<br />}"</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'$where'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$js</span><span style="color: #007700">));<br />foreach&nbsp;(</span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$doc</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$doc</span><span style="color: #007700">);<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(3) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#7 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;4ebc3e3710b89f2349000002&quot;
+  }
+  [&quot;name&quot;]=&gt;
+  string(3) &quot;Joe&quot;
+  [&quot;age&quot;]=&gt;
+  int(20)
+}
+</pre></div>
+   </div>
+  </div>
+  <div class="example" id="example-112">
+   <p><strong>Example #4 <span class="function"><strong>MongoCollection::find()</strong></span> example using $in</strong></p>
+   <div class="example-contents"><p>This example demonstrates how to search a collection using the $in operator.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">'test'</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCollection</span><span style="color: #007700">(</span><span style="color: #0000BB">$db</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'phpmanual'</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">'name'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$in'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'Joe'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'Wendy'</span><span style="color: #007700">))<br />));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(3) {
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#7 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;4ebc3e3710b89f2349000002&quot;
+  }
+  [&quot;name&quot;]=&gt;
+  string(3) &quot;Joe&quot;
+  [&quot;age&quot;]=&gt;
+  int(20)
+}
+</pre></div>
+   </div>
+  </div>
+
+  <div class="example" id="example-113">
+   <p><strong>Example #5 Getting results as an array</strong></p>
+   <div class="example-contents"><p>
+    This returns a <a href="class.mongocursor.html" class="classname">MongoCursor</a>.  Often, when people are 
+    starting out, they are more comfortable using an array.  To turn a cursor
+    into an array, use the <span class="function"><strong>iterator_to_array()</strong></span> function.  
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$db&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectDB</span><span style="color: #007700">(</span><span style="color: #DD0000">'test'</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCollection</span><span style="color: #007700">(</span><span style="color: #0000BB">$db</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'phpmanual'</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$array&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">iterator_to_array</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(3) {
+  [&quot;4ebc40af10b89f5149000000&quot;]=&gt;
+  array(2) {
+    [&quot;_id&quot;]=&gt;
+    object(MongoId)#6 (1) {
+      [&quot;$id&quot;]=&gt;
+      string(24) &quot;4ebc40af10b89f5149000000&quot;
+    }
+    [&quot;x&quot;]=&gt;
+    int(12)
+  }
+  [&quot;4ebc40af10b89f5149000001&quot;]=&gt;
+  array(2) {
+    [&quot;_id&quot;]=&gt;
+    object(MongoId)#11 (1) {
+      [&quot;$id&quot;]=&gt;
+      string(24) &quot;4ebc40af10b89f5149000001&quot;
+    }
+    [&quot;x&quot;]=&gt;
+    int(12)
+  }
+  [&quot;4ebc40af10b89f5149000002&quot;]=&gt;
+  array(3) {
+    [&quot;_id&quot;]=&gt;
+    object(MongoId)#12 (1) {
+      [&quot;$id&quot;]=&gt;
+      string(24) &quot;4ebc40af10b89f5149000002&quot;
+    }
+    [&quot;name&quot;]=&gt;
+    string(3) &quot;Joe&quot;
+    [&quot;age&quot;]=&gt;
+    int(20)
+  }
+}
+</pre></div>
+   </div>
+   <div class="example-contents"><p>
+    Using <span class="function"><strong>iterator_to_array()</strong></span> forces the driver to load all of
+    the results into memory, so do not do this for result sets that are larger
+    than memory!
+   </p></div>
+   <div class="example-contents"><p>
+    Also, certain system collections do not have an <code class="literal">_id</code> 
+    field.  If you are dealing with a collection that might have documents 
+    without <code class="literal">_id</code>s, pass <strong><code>false</code></strong> as the second argument to
+    <span class="function"><strong>iterator_to_array()</strong></span> (so that it will not try to use the
+    non-existent <code class="literal">_id</code> values as keys).
+   </p></div>
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.find-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="function"><a href="mongocollection.findone.html" class="function" rel="rdfs-seeAlso">MongoCollection::findOne()</a> - Queries this collection, returning a single element</span></li>
+   <li class="member"><span class="function"><a href="mongocollection.insert.html" class="function" rel="rdfs-seeAlso">MongoCollection::insert()</a> - Inserts a document into the collection</span></li>
+   <li class="member">MongoDB core docs on <a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/" class="link external">&raquo;&nbsp;find</a>.</li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

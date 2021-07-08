@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Executes a batch of write operations</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongowritebatch.construct.html">« MongoWriteBatch::__construct</a></li>
+      <li style="float: right;"><a href="class.mongoinsertbatch.html">MongoInsertBatch »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongowritebatch.html">MongoWriteBatch</a></li>
+    <li>Executes a batch of write operations</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongowritebatch.execute" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoWriteBatch::execute</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.5.0)</p><p class="refpurpose"><span class="refname">MongoWriteBatch::execute</span> &mdash; <span class="dc-title">Executes a batch of write operations</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongowritebatch.execute-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">final</span> <span class="modifier">public</span> <span class="methodname"><strong>MongoWriteBatch::execute</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$write_options</code></span>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   Executes the batch of write operations.
+  </p>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongowritebatch.execute-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+   
+    <dt>
+<code class="parameter">write_options</code></dt>
+
+    <dd>
+
+     <p class="para">
+      See <a href="mongowritebatch.construct.html#mongowritebatch.construct.write_options" class="link">MongoWriteBatch::__construct</a>.
+     </p>
+    </dd>
+
+   
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongowritebatch.execute-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns an array containing statistical information for the full batch.
+   If the batch had to be split into multiple batches, the return value will aggregate
+   the values from individual batches and return only the totals.
+  </p>
+  <p class="para">
+   If the batch was empty, an array containing only the &#039;ok&#039; field is returned (as <strong><code>true</code></strong>) although
+   nothing will be shipped over the wire (<acronym>NOOP</acronym>).
+  </p>
+  <p class="para">
+   <table class="doctable informaltable">
+    <thead>
+     <tr>
+      <th>Array key</th>
+      <th>Value meaning</th>
+      <th>Returned for batch type</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+     <tr>
+      <td>nInserted</td>
+      <td>Number of inserted documents</td>
+      <td>MongoWriteBatch::COMMAND_INSERT batch</td>
+     </tr>
+
+     <tr>
+      <td>nMatched</td>
+      <td>Number of documents matching the query criteria</td>
+      <td>MongoWriteBatch::COMMAND_UPDATE batch</td>
+     </tr>
+
+     <tr>
+      <td>nModified</td>
+      <td>Number of documents actually needed to be modied</td>
+      <td>MongoWriteBatch::COMMAND_UPDATE batch</td>
+     </tr>
+
+     <tr>
+      <td>nUpserted</td>
+      <td>Number of upserted documents</td>
+      <td>MongoWriteBatch::COMMAND_UPDATE batch</td>
+     </tr>
+
+     <tr>
+      <td>nRemoved</td>
+      <td>Number of documents removed</td>
+      <td>MongoWriteBatch::COMMAND_DELETE batch</td>
+     </tr>
+
+     <tr>
+      <td>ok</td>
+      <td>Command success indicator</td>
+      <td>All</td>
+     </tr>
+
+    </tbody>
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongowritebatch.execute-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   A <a href="class.mongowriteconcernexception.html" class="classname">MongoWriteConcernException</a> exception is thrown on failure.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongowritebatch.execute-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="mongowritebatch.execute.example.insert">
+   <p><strong>Example #1 <span class="methodname"><a href="mongowritebatch.add.html" class="methodname">MongoWriteBatch::add()</a></span> example</strong></p>
+   <div class="example-contents"><p>
+    Batching up multiple insert operations
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$mc&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"localhost"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"test"</span><span style="color: #007700">);<br /><br /><br /></span><span style="color: #0000BB">$docs&nbsp;</span><span style="color: #007700">=&nbsp;array();<br /></span><span style="color: #0000BB">$docs</span><span style="color: #007700">[]&nbsp;=&nbsp;array(</span><span style="color: #DD0000">"my"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"demo"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$docs</span><span style="color: #007700">[]&nbsp;=&nbsp;array(</span><span style="color: #DD0000">"is"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"working"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$docs</span><span style="color: #007700">[]&nbsp;=&nbsp;array(</span><span style="color: #DD0000">"pretty"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"well"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$batch&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoInsertBatch</span><span style="color: #007700">(</span><span style="color: #0000BB">$collection</span><span style="color: #007700">);<br />foreach(</span><span style="color: #0000BB">$docs&nbsp;</span><span style="color: #007700">as&nbsp;</span><span style="color: #0000BB">$document</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">add</span><span style="color: #007700">(</span><span style="color: #0000BB">$document</span><span style="color: #007700">);<br />}<br /></span><span style="color: #0000BB">$retval&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$retval</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+    <div class="example-contents"><p>The above example will output:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;nInserted&quot;]=&gt;
+  int(3)
+  [&quot;ok&quot;]=&gt;
+  bool(true)
+}
+</pre></div>
+    </div>
+  </div>
+
+  <div class="example" id="mongowritebatch.execute.example.update">
+   <p><strong>Example #2 <span class="methodname"><a href="mongowritebatch.add.html" class="methodname">MongoWriteBatch::add()</a></span> example</strong></p>
+   <div class="example-contents"><p>
+    Batching up multiple update operations
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$mc&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"localhost"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"test"</span><span style="color: #007700">);<br /><br /><br /></span><span style="color: #0000BB">$item1&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"q"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"my"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"demo"</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"u"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$set'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"try"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">)),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"multi"&nbsp;&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,&nbsp;</span><span style="color: #FF8000">/*&nbsp;default&nbsp;value&nbsp;*/<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"upsert"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">false</span><span style="color: #007700">,&nbsp;</span><span style="color: #FF8000">/*&nbsp;default&nbsp;value&nbsp;*/<br /></span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$item2&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"q"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"is"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"working"</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"u"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$set'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"try"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">2</span><span style="color: #007700">)),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"multi"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">,<br />);<br /></span><span style="color: #0000BB">$item3&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"q"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"created"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"new-document"</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"u"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">'$set'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"try"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">3</span><span style="color: #007700">)),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"upsert"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">,<br />);<br /><br /></span><span style="color: #0000BB">$batch&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoUpdateBatch</span><span style="color: #007700">(</span><span style="color: #0000BB">$collection</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">add</span><span style="color: #007700">(</span><span style="color: #0000BB">$item1</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">add</span><span style="color: #007700">(</span><span style="color: #0000BB">$item2</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">add</span><span style="color: #007700">(</span><span style="color: #0000BB">$item3</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$retval&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$retval</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+    <div class="example-contents"><p>The above example will output:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+array(4) {
+  [&quot;nMatched&quot;]=&gt;
+  int(18)
+  [&quot;nModified&quot;]=&gt;
+  int(2)
+  [&quot;nUpserted&quot;]=&gt;
+  int(0)
+  [&quot;ok&quot;]=&gt;
+  bool(true)
+}
+</pre></div>
+    </div>
+  </div>
+
+  <div class="example" id="mongowritebatch.execute.example.delete">
+   <p><strong>Example #3 <span class="methodname"><a href="mongowritebatch.add.html" class="methodname">MongoWriteBatch::add()</a></span> example</strong></p>
+   <div class="example-contents"><p>
+    Batching up multiple delete operations
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$mc&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"localhost"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"test"</span><span style="color: #007700">);<br /><br /><br /></span><span style="color: #0000BB">$item1&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"q"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"my"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"demo"</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"limit"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />);<br /></span><span style="color: #0000BB">$item2&nbsp;</span><span style="color: #007700">=&nbsp;array(<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"q"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;array(</span><span style="color: #DD0000">"try"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">3</span><span style="color: #007700">),<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"limit"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />);<br /><br /><br /></span><span style="color: #0000BB">$batch&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoDeleteBatch</span><span style="color: #007700">(</span><span style="color: #0000BB">$collection</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">add</span><span style="color: #007700">(</span><span style="color: #0000BB">$item1</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">add</span><span style="color: #007700">(</span><span style="color: #0000BB">$item2</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$retval&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$batch</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"w"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$retval</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+    <div class="example-contents"><p>The above example will output:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;nRemoved&quot;]=&gt;
+  int(1)
+  [&quot;ok&quot;]=&gt;
+  bool(true)
+}
+</pre></div>
+    </div>
+  </div>
+ </div>
+
+
+</div></div></div></body></html>

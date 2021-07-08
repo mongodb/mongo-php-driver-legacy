@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Create a dummy MongoId</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongoid.isvalid.html">« MongoId::isValid</a></li>
+      <li style="float: right;"><a href="mongoid.tostring.html">MongoId::__toString »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongoid.html">MongoId</a></li>
+    <li>Create a dummy MongoId</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongoid.set-state" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoId::__set_state</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.0.8)</p><p class="refpurpose"><span class="refname">MongoId::__set_state</span> &mdash; <span class="dc-title">Create a dummy MongoId</span></p>
+
+ </div>
+
+ <div id="mongoid.set-state-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension.</p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongoid.set-state-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><strong>MongoId::__set_state</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$props</code></span>): <span class="type"><a href="class.mongoid.html" class="type MongoId">MongoId</a></span></div>
+
+  <p class="para rdfs-comment">
+   This function is only used by PHP internally, it shouldn&#039;t need to ever be
+   called by the user.
+  </p>
+  <p class="para">
+   It is identical to the function:
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #007700">public&nbsp;static&nbsp;function&nbsp;</span><span style="color: #0000BB">__set_state</span><span style="color: #007700">(</span><span style="color: #0000BB">$props</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoId</span><span style="color: #007700">(</span><span style="color: #DD0000">"000000000000000000000000"</span><span style="color: #007700">);<br />}<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongoid.set-state-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">props</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Theoretically, an array of properties used to create the new id.  
+       However, as MongoId instances have no properties, this is not used.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongoid.set-state-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   A new id with the value &quot;000000000000000000000000&quot;.
+  </p>
+ </div>
+
+</div></div></div></body></html>

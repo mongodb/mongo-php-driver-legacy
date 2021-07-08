@@ -1,0 +1,420 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Changelog</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongowriteconcernexception.getdocument.html">« MongoWriteConcernException::getDocument</a></li>
+      
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="book.mongo.html">Mongo</a></li>
+    <li>Changelog</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="changelog.mongo" class="appendix">
+ <h1>Changelog</h1>
+
+ <p class="para">The following changes have been made to classes/functions/methods of this extension.</p>
+
+ <div class="simplesect" id="changelog.mongo.1.5">
+  <h3 class="title">MongoDB PHP Driver 1.5.0</h3>
+  <p class="para">
+   It supports all new features for MongoDB 2.6, including: 
+  
+   <ul class="simplelist">
+    <li class="member">Aggregate can now return a cursor</li>
+    <li class="member">Aggregation pipelines can now be explained</li>
+    <li class="member">Possible to set maxTimeMS for commands and queries</li>
+    <li class="member">Transparent support for the new command-based MongoDB write API</li>
+    <li class="member">New MongoWriteBatch classes (using the new MongoDB write API)</li>
+    <li class="member">Support for MongoDB Enterprise features (e.g. Kerberos, LDAP, X509)</li>
+    <li class="member">Option to tune acceptable server latency for secondary reads (secondaryAcceptableLatencyMS)</li>
+   </ul>
+  </p> 
+  <p class="para">
+   With this release, some driver functionality which was previously 
+   documented as deprecated will now formally raise deprecation notices. This 
+   includes: 
+   <ul class="simplelist">
+    <li class="member">Instantiating the Mongo class</li>
+    <li class="member">Calling MongoCursor::slaveOkay()</li>
+    <li class="member">&quot;wtimeout&quot; and &quot;safe&quot; options for MongoCollection write operations</li>
+    <li class="member">Manipulating public properties on core classes (such as $collection-&gt;w)</li>
+   </ul>
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    No previously deprecated features have been removed. 
+   </p>
+  </p></blockquote>
+  <p class="para">
+   Changes in behaviour: 
+   <ul class="simplelist">
+    <li class="member">Setting the mongo.native_long INI setting now raises an error on 32-bit 
+     platforms, and now defaults to true for 64-bit platforms.</li>
+   </ul>
+  </p>
+ </div>
+
+ <div class="simplesect" id="changelog.mongo.1.4">
+  <h3 class="title">MongoDB PHP Driver 1.4.0</h3>
+  <p class="para">
+   The 1.4 series introduced fundemental changes in how connections are created to the MongoDB servers.
+   The driver now utilizes PHP native streams, so all normal PHP stream options apply.
+   Furthermore, an experimental Stream Context Support was added.
+  </p>
+  <p class="para">
+   The 1.4.x series also added support for MongoDB 2.4.x.
+  </p>
+  <p class="para">
+   The most important improvements however deal with the handling of replica sets, 
+   especially nodes that timeout and nodes that are unreachable for various 
+   reasons. Besides the improvements to replica set handling, this release 
+   addresses issues with read preferences through mongos nodes. It also 
+   adds support for SSL enabled connections as well as journal and fsync 
+   connection string options. 
+  </p>
+ </div>
+
+ <div class="simplesect" id="changelog.mongo.1.3">
+  <h3 class="title">MongoDB PHP Driver 1.3.0</h3>
+  <p class="para">
+   The 1.3 series introduced several major changes to the extension such as
+   completely rewritten <a href="mongo.connecting.html" class="link">connection
+   handling</a> (and removal of the pooling mechanism), support for
+   <a href="mongo.readpreferences.html" class="link">ReadPreferences</a> and change the
+   default <a href="mongo.writes.html" class="link">WriteConcerns</a> to be
+   <em class="emphasis">acknowledged</em> by introducing a new class
+   <a href="class.mongoclient.html" class="link">MongoClient</a> which serves as a
+   replacement class for the now deprecated <a href="class.mongo.html" class="classname">Mongo</a> class.
+  </p>
+  <p class="para">
+   The driver now also supports connecting to multiple mongos instances (the
+   Mongo Shard router) for loadbalancing.
+  </p>
+  <p class="para">
+   Other enhancements include improved logging for easier connection handling
+   debugging with <a href="class.mongolog.html" class="classname">MongoLog</a> and support for the
+   <a href="https://docs.mongodb.com/manual/core/aggregation-pipeline/" class="link external">&raquo;&nbsp;Aggregation Framework</a>
+   via the <span class="methodname"><a href="mongocollection.aggregate.html" class="methodname">MongoCollection::aggregate()</a></span> method.
+  </p>
+ </div>
+
+
+ <div class="simplesect">
+  <h3 class="title">Changes to existing methods</h3>
+  <p class="para">
+  Following is a list of all improvements to existing methods since
+  their inception.
+  </p>
+  <table class='doctable table' rules='groups'><thead><tr><th>Version</th><th>Function</th><th>Description</th></tr></thead><tbody class="gen-changelog v"><tr><td>PECL mongo 1.7.0</td><td><a href='mongodb.execute.html'>MongoDB::execute</a></td><td>This method has been deprecated as a result of the underlaying
+        eval command
+        being deprecated in MongoDB 3.0+.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-7-0"><tr><td>PECL mongo 1.6.0</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added support for &quot;SCRAM-SHA-1&quot; in
+         &quot;authMechanism&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.count.html'>MongoCollection::count</a></td><td>The second parameter is now an options array.
+        Passing limit and skip as
+        the second and third parameters, respectively, is deprecated.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.getcollectionnames.html'>MongoDB::getCollectionNames</a></td><td>Changed first parameter to be an array of options. Pre-1.6.0, the
+       first parameter was a boolean indicating the
+       &quot;includeSystemCollections&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.listcollections.html'>MongoDB::listCollections</a></td><td>Changed first parameter to be an array of options. Pre-1.6.0, the
+       first parameter was a boolean indicating the
+       &quot;includeSystemCollections&quot; option.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-6-0"><tr><td>PECL mongo 1.5.0</td><td><a href='function.log-cmd-delete.html'>log_cmd_delete</a></td><td>Only available when connected to MongoDB 2.6.0+</td></tr><tr><td>&nbsp;</td><td><a href='function.log-cmd-insert.html'>log_cmd_insert</a></td><td>Only available when connected to MongoDB 2.6.0+</td></tr><tr><td>&nbsp;</td><td><a href='function.log-cmd-update.html'>log_cmd_update</a></td><td>Only available when connected to MongoDB 2.6.0+</td></tr><tr><td>&nbsp;</td><td><a href='function.log-write-batch.html'>log_write_batch</a></td><td>Only available when connected to MongoDB 2.6.0+</td></tr><tr><td>&nbsp;</td><td><a href='mongobindata.construct.html'>MongoBinData::__construct</a></td><td>The default changed from 2
+        (MongoBinData::BYTE_ARRAY) to
+        0 (MongoBinData::GENERIC).</td></tr><tr><td>&nbsp;</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;authMechanism&quot;, &quot;gssapiServiceName&quot;, and &quot;secondaryAcceptableLatencyMS&quot;.</td></tr><tr><td>&nbsp;</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;authSource&quot;.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.aggregate.html'>MongoCollection::aggregate</a></td><td>Added optional options argument</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.batchinsert.html'>MongoCollection::batchInsert</a></td><td>Added the &quot;wTimeoutMS&quot; option, which replaces
+         &quot;wtimeout&quot;. Emits E_DEPRECATED
+         when &quot;wtimeout&quot; is used.
+        
+        
+         Added the &quot;socketTimeoutMS&quot; option, which replaces
+         &quot;timeout&quot;. Emits E_DEPRECATED
+         when &quot;timeout&quot; is used.
+        
+        
+         Emits E_DEPRECATED when &quot;safe&quot;
+         is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Renamed the &quot;wtimeout&quot; option to
+         &quot;wTimeoutMS&quot;. Emits
+         E_DEPRECATED when &quot;wtimeout&quot; is
+         used.
+        
+        
+         Renamed the &quot;timeout&quot; option to
+         &quot;socketTimeoutMS&quot;. Emits
+         E_DEPRECATED when &quot;timeout&quot; is
+         used.
+        
+        
+         Emits E_DEPRECATED when &quot;safe&quot;
+         is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.findone.html'>MongoCollection::findOne</a></td><td>Added optional options argument.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.group.html'>MongoCollection::group</a></td><td>Added &quot;maxTimeMS&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Added the &quot;wTimeoutMS&quot; option, which replaces
+         &quot;wtimeout&quot;. Emits E_DEPRECATED
+         when &quot;wtimeout&quot; is used.
+        
+        
+         Added the &quot;socketTimeoutMS&quot; option, which replaces
+         &quot;timeout&quot;. Emits E_DEPRECATED
+         when &quot;timeout&quot; is used.
+        
+        
+         Emits E_DEPRECATED when &quot;safe&quot;
+         is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Added &quot;wTimeoutMS&quot; option, which replaces
+         &quot;wtimeout&quot;. Emits E_DEPRECATED
+         when &quot;wtimeout&quot; is used.
+        
+        
+         Added &quot;socketTimeoutMS&quot; option, which replaces
+         &quot;timeout&quot;. Emits E_DEPRECATED
+         when &quot;timeout&quot; is used.
+        
+        
+         Emits E_DEPRECATED when &quot;safe&quot;
+         is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.save.html'>MongoCollection::save</a></td><td>Added &quot;wTimeoutMS&quot; option, which replaces
+         &quot;wtimeout&quot;. Emits E_DEPRECATED
+         when &quot;wtimeout&quot; is used.
+        
+        
+         Added &quot;socketTimeoutMS&quot; option, which replaces
+         &quot;timeout&quot;. Emits E_DEPRECATED
+         when &quot;timeout&quot; is used.
+        
+        
+         Emits E_DEPRECATED when &quot;safe&quot;
+         is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.toindexstring.html'>MongoCollection::toIndexString</a></td><td>This method has been deprecated.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Added the &quot;wTimeoutMS&quot; option, which replaces
+         &quot;wtimeout&quot;. Emits E_DEPRECATED
+         when &quot;wtimeout&quot; is used.
+        
+        
+         Added the &quot;socketTimeoutMS&quot; option, which replaces
+         &quot;timeout&quot;. Emits E_DEPRECATED
+         when &quot;timeout&quot; is used.
+        
+        
+         Emits E_DEPRECATED when &quot;safe&quot;
+         is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocursor.slaveokay.html'>MongoCursor::slaveOkay</a></td><td>This method has been deprecated in favour of
+        MongoCursor::setReadPreference and .</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.command.html'>MongoDB::command</a></td><td>Renamed the &quot;timeout&quot; option to
+         &quot;socketTimeoutMS&quot;. Emits
+         E_DEPRECATED when &quot;timeout&quot; is
+         used.
+        
+        
+         Added hash by-reference parameter.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-5-0"><tr><td>PECL mongo 1.4.5</td><td><a href='mongocursor.batchsize.html'>MongoCursor::batchSize</a></td><td>Before 1.4.5, this method would throw an
+         MongoCursorException if the cursor had already
+         started iterating.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-4-5"><tr><td>PECL mongo 1.4.0</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;ssl&quot; option and support for
+         connecting over SSL.
+        
+        
+         Added &quot;wTimeoutMS&quot; option, which replaces
+         &quot;wTimeout&quot;.
+        
+        
+         Emits E_DEPRECATED when
+         &quot;slaveOkay&quot; or &quot;timeout&quot; is used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocursor.hint.html'>MongoCursor::hint</a></td><td>The index argument now supports index names as
+         string values. In versions before 1.4.0, only array or object values
+         were accepted.</td></tr><tr><td>&nbsp;</td><td><a href='mongocursor.setflag.html'>MongoCursor::setFlag</a></td><td>Support for flag 3 (OPLOG_REPLAY) is added. Versions before 1.4.0
+        would throw a warning saying that the flag is unsupported.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.createcollection.html'>MongoDB::createCollection</a></td><td>In versions before 1.4.0, the options were all arguments to the method. The
+         function synopsis in those older versions is:
+        
+        
+         
+          public MongoCollectionMongoDB::createCollection
+          stringname
+          boolcappedfalse
+          intsize0
+          intmax0
+         
+        
+        
+         The meaning of the options is the same as described under the
+         options argument above.</td></tr><tr><td>&nbsp;</td><td><a href='mongoid.construct.html'>MongoId::__construct</a></td><td>An exception is thrown when passed invalid string</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-4-0"><tr><td>PECL mongo 1.3.4</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;connectTimeoutMS&quot; and
+         &quot;socketTimeoutMS&quot; options.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.batchinsert.html'>MongoCollection::batchInsert</a></td><td>Added &quot;wtimeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Added &quot;wtimeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Added &quot;wtimeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Added &quot;wtimeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Added &quot;wtimeout&quot; option.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-3-4"><tr><td>PECL mongo 1.3.3</td><td><a href='mongoclient.getreadpreference.html'>MongoClient::getReadPreference</a></td><td>The return value has changed to be consistent with
+        MongoClient::setReadPreference. The
+        type value was changed from a number to a string,
+        type_string was removed, and
+        tagsets now expresses tags as key/value pairs instead
+        of colon-delimited strings.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.getreadpreference.html'>MongoCollection::getReadPreference</a></td><td>The return value has changed to be consistent with
+        MongoCollection::setReadPreference. The
+        type value was changed from a number to a string,
+        type_string was removed, and
+        tagsets now expresses tags as key/value pairs instead
+        of colon-delimited strings.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.getreadpreference.html'>MongoDB::getReadPreference</a></td><td>The return value has changed to be consistent with
+        MongoDB::setReadPreference. The
+        type value was changed from a number to a string,
+        type_string was removed, and
+        tagsets now expresses tags as key/value pairs instead
+        of colon-delimited strings.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-3-3"><tr><td>PECL mongo 1.3.0</td><td><a href='mongoclient.close.html'>MongoClient::close</a></td><td>The connection parameter to this function was
+         added in 1.3.0. Before that, only the write connection would be
+         closed by this method.</td></tr><tr><td>&nbsp;</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;readPreference&quot;,
+         &quot;readPreferenceTags&quot;, &quot;w&quot;, and
+         &quot;wTimeout&quot; options.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.batchinsert.html'>MongoCollection::batchInsert</a></td><td>Added &quot;w&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Added &quot;w&quot; option.
+        
+         The options parameter no longer accepts a
+         boolean to signify a unique index. Instead, this now has to be done
+         with array('unique' =&gt; true).</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Added &quot;w&quot; option.
+        
+         The options parameter no longer accepts a
+         boolean to signify an acknowledged write. Instead, this now has to be
+         done with array('w' =&gt; 1) (the default behaviour of
+         MongoClient).</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Added &quot;w&quot; option.
+        
+         The options parameter no longer accepts a
+         boolean to signify &quot;justOne&quot;. Instead, this now has
+         to be done with array('justOne' =&gt; true).</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Added &quot;w&quot; option.
+        
+         The options parameter no longer accepts a boolean
+         to signify an upsert. Instead, this now has to be done with
+         array('upsert' =&gt; true).</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.listcollections.html'>MongoDB::listCollections</a></td><td>Added the includeSystemCollections parameter.</td></tr><tr><td>&nbsp;</td><td><a href='mongogridfscursor.key.html'>MongoGridFSCursor::key</a></td><td>The document's _id is returned as a string value,
+        since the key should be unique. Pre-1.3.0, filename
+        was returned.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-3-0"><tr><td>PECL mongo 1.2.11</td><td><a href='mongo.getpoolsize.html'>Mongo::getPoolSize</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongo.getslave.html'>Mongo::getSlave</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongo.getslaveokay.html'>Mongo::getSlaveOkay</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongo.pooldebug.html'>Mongo::poolDebug</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongo.setslaveokay.html'>Mongo::setSlaveOkay</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongo.switchslave.html'>Mongo::switchSlave</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongobindata.construct.html'>MongoBinData::__construct</a></td><td>Emits E_DEPRECATED when the second argument is not
+        used. The default value for type may change in
+        the near future.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Emits E_DEPRECATED when
+        options is scalar.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.getslaveokay.html'>MongoCollection::getSlaveOkay</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.group.html'>MongoCollection::group</a></td><td>Emits E_DEPRECATED when
+        options is scalar.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Emits E_DEPRECATED when
+        options is scalar.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.setslaveokay.html'>MongoCollection::setSlaveOkay</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Emits E_DEPRECATED when
+        options is scalar.</td></tr><tr><td>&nbsp;</td><td><a href='mongocursor.doquery.html'>MongoCursor::doQuery</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.authenticate.html'>MongoDB::authenticate</a></td><td>Emits E_DEPRECATED when used. Please pass in the
+        authentication details to the constructor.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.forceerror.html'>MongoDB::forceError</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.getslaveokay.html'>MongoDB::getSlaveOkay</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.preverror.html'>MongoDB::prevError</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.reseterror.html'>MongoDB::resetError</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.setslaveokay.html'>MongoDB::setSlaveOkay</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongopool.getsize.html'>MongoPool::getSize</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongopool.info.html'>MongoPool::info</a></td><td>Emits E_DEPRECATED when used.</td></tr><tr><td>&nbsp;</td><td><a href='mongopool.setsize.html'>MongoPool::setSize</a></td><td>Emits E_DEPRECATED when used.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-2-11"><tr><td>PECL mongo 1.2.10</td><td><a href='mongoclient.gethosts.html'>MongoClient::getHosts</a></td><td>Support for non-replicasets was added.
+        
+        
+         The returned array elements now also include the
+         hostname and port.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-2-10"><tr><td>PECL mongo 1.2.7</td><td><a href='mongocollection.batchinsert.html'>MongoCollection::batchInsert</a></td><td>Added &quot;continueOnError&quot; option.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-2-7"><tr><td>PECL mongo 1.2.5</td><td><a href='mongogridfs.storeupload.html'>MongoGridFS::storeUpload</a></td><td>Changed second parameter to an array of metadata. Pre-1.2.5, the
+        second parameter was an optional string overriding the filename.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-2-5"><tr><td>PECL mongo 1.2.0</td><td><a href='mongoclient.close.html'>MongoClient::close</a></td><td>Before version 1.2.0 the driver would not use persistent connections
+         by default, and all connections would be closed as soon as a MongoDB
+         connection went out if scope. Since version 1.2.0 this is no longer
+         the case and it is a bad idea to call close as you might end up
+         overloading the server with connections under high load.</td></tr><tr><td>&nbsp;</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;username&quot; and &quot;password&quot;
+         options.
+        
+        
+         Removed &quot;persist&quot; option, as all connections are
+         now persistent. It can still be used, but it doesn't affect anything.
+        
+        
+         
+          
+           &quot;persist&quot;
+          
+          
+           
+            If the connection should be persistent. If set, the connection will
+            be persistent. The string representation of the value is used as an
+            ID for the connection, so two instances of
+            MongoClient that are initialized with
+            array(&quot;persist&quot; =&gt; &quot;foobar&quot;) will share the same
+            database connection, whereas an instance initialized with
+            array(&quot;persist&quot; =&gt; &quot;barbaz&quot;) will use a different
+            database connection.
+           
+          
+         
+        
+        
+         The &quot;replicaSet&quot; option now takes a string, not a
+         boolean.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Added &quot;timeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Added &quot;timeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Added &quot;timeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.save.html'>MongoCollection::save</a></td><td>Added &quot;timeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Added &quot;timeout&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongodb.command.html'>MongoDB::command</a></td><td>Added options parameter with a single option: 
+        &quot;timeout&quot;.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-2-0"><tr><td>PECL mongo 1.1.0</td><td><a href='mongocursor.info.html'>MongoCursor::info</a></td><td>Added a number of other fields, including id (the 
+        cursor id), at (the driver's counter of which 
+        document is current), numReturned (the number 
+        returned by the server in the current batch), and 
+        server (which server the query was sent 
+        to&mdash;useful in conjunction with
+        .</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-1-0"><tr><td>PECL mongo 1.0.11</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>The &quot;safe&quot; option will trigger a primary failover,
+         if necessary.
+        
+        
+         MongoException will be thrown if the index name
+         (either generated or set) is longer than 128 bytes.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Disconnects on &quot;not master&quot; errors if &quot;safe&quot; is set.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Disconnects on &quot;not master&quot; errors if &quot;safe&quot; is set.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.save.html'>MongoCollection::save</a></td><td>Disconnects on &quot;not master&quot; errors if &quot;safe&quot; is set.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Disconnects on &quot;not master&quot; errors if &quot;safe&quot; is set.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-0-11"><tr><td>PECL mongo 1.0.10</td><td><a href='mongocursor.info.html'>MongoCursor::info</a></td><td>Added started_iterating field, a boolean indicating
+        if cursor is pre- or post-query.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-0-10"><tr><td>PECL mongo 1.0.9</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Added &quot;replicaSet&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.batchinsert.html'>MongoCollection::batchInsert</a></td><td>Added ability to pass integers to the &quot;safe&quot; option,
+         which previously only accepted booleans.
+        
+        
+         Added &quot;fsync&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Added ability to pass integers to the &quot;safe&quot; option,
+         which previously only accepted booleans.
+        
+        
+         Added &quot;fsync&quot; option.
+        
+        
+         The return type was changed to be an array containing error information
+         if the &quot;safe&quot; option is used. Otherwise, a boolean
+         is returned as before.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Added ability to pass integers to the &quot;safe&quot; option,
+         which previously only accepted booleans.
+        
+        
+         Added &quot;fsync&quot; option.
+        
+        
+         The return type was changed to be an array containing error information
+         if the &quot;safe&quot; option is used. Otherwise, a boolean
+         is returned as before.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.save.html'>MongoCollection::save</a></td><td>Added &quot;fsync&quot; option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Added ability to pass integers to the &quot;safe&quot; option,
+         which previously only accepted booleans.
+        
+        
+         Added &quot;fsync&quot; option.
+        
+        
+         The return type was changed to be an array containing error information
+         if the &quot;safe&quot; option is used. Otherwise, a boolean
+         is returned as before.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-0-9"><tr><td>PECL mongo 1.0.7</td><td><a href='mongocollection.count.html'>MongoCollection::count</a></td><td>Added limit and skip as
+        second and third parameters, respectively.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-0-7"><tr><td>PECL mongo 1.0.5</td><td><a href='mongocollection.batchinsert.html'>MongoCollection::batchInsert</a></td><td>Added options parameter.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Added the &quot;name&quot; option to override index name
+        creation.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.remove.html'>MongoCollection::remove</a></td><td>Changed second parameter to be an array of options. Pre-1.0.5, the
+        second parameter was a boolean indicating the &quot;safe&quot;
+        option.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.save.html'>MongoCollection::save</a></td><td>Added options parameter.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Added &quot;safe&quot; option.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-0-5"><tr><td>PECL mongo 1.0.2</td><td><a href='mongoclient.construct.html'>MongoClient::__construct</a></td><td>Changed constructor to take an array of options. Pre-1.0.2, the
+         constructor took the following parameters:
+        
+        
+         
+          
+           server
+          
+          
+           
+            The server name.
+           
+          
+         
+         
+          
+           connect
+          
+          
+           
+            Optional boolean parameter specifying if the constructor should
+            connect to the database before returning.  Defaults to true.
+           
+          
+         
+         
+          
+           persistent
+          
+          
+           
+            If the connection should be persistent.
+           
+          
+         
+         
+          
+           paired
+          
+          
+           
+            If the connection should be paired.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.ensureindex.html'>MongoCollection::ensureIndex</a></td><td>Changed options parameter from boolean to array.
+        Pre-1.0.2, the second parameter was an optional boolean value specifying
+        a unique index.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Changed second parameter to be an array of options. Pre-1.0.2, the
+        second parameter was a boolean indicating the &quot;safe&quot;
+        option.</td></tr></tbody><tbody class="gen-changelog vPECL mongo 1-0-2"><tr><td>PECL mongo 1.0.1</td><td><a href='mongocollection.insert.html'>MongoCollection::insert</a></td><td>Throw a MongoCursorException if the
+        &quot;safe&quot; option is set and the insert fails.</td></tr><tr><td>&nbsp;</td><td><a href='mongocollection.update.html'>MongoCollection::update</a></td><td>Changed options parameter from boolean to array.
+        Pre-1.0.1, the second parameter was an optional boolean value specifying
+        an upsert.</td></tr></tbody></table>
+ </div>
+
+
+</div>
+</div></div></body></html>

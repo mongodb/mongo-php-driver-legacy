@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Checks if an array is a database reference</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodbref.get.html">« MongoDBRef::get</a></li>
+      <li style="float: right;"><a href="class.mongominkey.html">MongoMinKey »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodbref.html">MongoDBRef</a></li>
+    <li>Checks if an array is a database reference</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodbref.isref" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDBRef::isRef</h1>
+  <p class="verinfo">(PECL mongo &gt;= 0.9.0)</p><p class="refpurpose"><span class="refname">MongoDBRef::isRef</span> &mdash; <span class="dc-title">Checks if an array is a database reference</span></p>
+
+ </div>
+
+ <div id="mongodbref.isref-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this class
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this class in the new extension.</p>
+   <p class="para">
+    The concept of database references, and hence this class, has been
+    deprecated.
+   </p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodbref.isref-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><strong>MongoDBRef::isRef</strong></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$ref</code></span>): <span class="type">bool</span></div>
+
+  <p class="para rdfs-comment">
+   This method does not actually follow the reference, so it does not determine if it is
+   broken or not.  It merely checks that <code class="parameter">ref</code> is in valid 
+   database reference format (in that it is an object or array with $ref and $id
+   fields).
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodbref.isref-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">ref</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Array or object to check.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodbref.isref-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+    Returns <strong><code>true</code></strong> on success or <strong><code>false</code></strong> on failure.
+  </p>
+ </div>
+
+</div></div></div></body></html>

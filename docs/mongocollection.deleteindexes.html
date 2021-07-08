@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Delete all indices for this collection</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.deleteindex.html">« MongoCollection::deleteIndex</a></li>
+      <li style="float: right;"><a href="mongocollection.distinct.html">MongoCollection::distinct »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Delete all indices for this collection</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.deleteindexes" class="refentry">
+  <div class="refnamediv">
+  <h1 class="refname">MongoCollection::deleteIndexes</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoCollection::deleteIndexes</span> &mdash; <span class="dc-title">Delete all indices for this collection</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.deleteindexes-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::deleteIndexes</strong></span>(): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.deleteindexes-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.deleteindexes-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the database response.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.deleteindexes-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-102">
+   <p><strong>Example #1 <span class="function"><strong>MongoCollection::deleteIndexes()</strong></span> example</strong></p>
+   <div class="example-contents"><p>This example demonstrates how to delete all indexes from a collection and the response to expect.</p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$collection&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$mongo</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">my_db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">articles</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$response&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">deleteIndexes</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">print_r</span><span style="color: #007700">(</span><span style="color: #0000BB">$response</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+Array
+(
+    [nIndexesWas] =&gt; 1
+    [msg] =&gt; all indexes deleted for collection
+    [ok] =&gt; 1
+)
+</pre></div>
+   </div>   
+  </div>  
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.deleteindexes-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="methodname"><a href="mongocollection.createindex.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::createIndex()</a> - Creates an index on the specified field(s) if it does not already exist</span></li>
+   <li class="member"><span class="methodname"><a href="mongocollection.deleteindex.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::deleteIndex()</a> - Deletes an index from this collection</span></li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

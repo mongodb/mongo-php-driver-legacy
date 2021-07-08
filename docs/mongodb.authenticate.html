@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Log in to this database</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongodb.html">« MongoDB</a></li>
+      <li style="float: right;"><a href="mongodb.command.html">MongoDB::command »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodb.html">MongoDB</a></li>
+    <li>Log in to this database</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodb.authenticate" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDB::authenticate</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.0.1)</p><p class="refpurpose"><span class="refname">MongoDB::authenticate</span> &mdash; <span class="dc-title">Log in to this database</span></p>
+
+ </div>
+
+ <div id="mongodb.authenticate-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this method
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this method in the new extension.</p>
+   <p class="para">Instead, you need to provide credentials through the connection
+   string.</p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodb.authenticate-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoDB::authenticate</strong></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$username</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$password</code></span>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   This method causes its connection to be authenticated.  If authentication is
+   enabled for the database server (it&#039;s not, by default), you need to log in
+   before the database will allow you to do anything.
+  </p>
+  <p class="para">
+   In general, you should use the authenticate built into
+   <span class="function"><a href="mongoclient.construct.html" class="function">MongoClient::__construct()</a></span> in preference to this method.
+   If you authenticate on connection and the connection drops and reconnects
+   during your session, you&#039;ll be reauthenticated.  If you manually
+   authenticated using this method and the connection drops, you&#039;ll have to call
+   this method again once you&#039;re reconnected.
+  </p>
+  <p class="para">
+   This method is identical to running:
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$salted&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #DD0000">"</span><span style="color: #007700">${</span><span style="color: #0000BB">username</span><span style="color: #007700">}</span><span style="color: #DD0000">:mongo:</span><span style="color: #007700">${</span><span style="color: #0000BB">password</span><span style="color: #007700">}</span><span style="color: #DD0000">"</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$hash&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">md5</span><span style="color: #007700">(</span><span style="color: #0000BB">$salted</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$nonce&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">command</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"getnonce"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">$saltedHash&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">md5</span><span style="color: #007700">(</span><span style="color: #0000BB">$nonce</span><span style="color: #007700">[</span><span style="color: #DD0000">"nonce"</span><span style="color: #007700">].</span><span style="color: #DD0000">"</span><span style="color: #007700">${</span><span style="color: #0000BB">username</span><span style="color: #007700">}${</span><span style="color: #0000BB">hash</span><span style="color: #007700">}</span><span style="color: #DD0000">"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">$result&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">command</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"authenticate"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"user"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$username</span><span style="color: #007700">,<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"nonce"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$nonce</span><span style="color: #007700">[</span><span style="color: #DD0000">"nonce"</span><span style="color: #007700">],<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #DD0000">"key"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$saltedHash<br /></span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </p>
+  <p class="para">
+   Once a connection has been authenticated, it can only be un-authenticated by
+   using the &quot;logout&quot; database command:
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">command</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"logout"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </p>
+ </div>
+
+ <div class="refsect1 parameters" id="refsect1-mongodb.authenticate-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">username</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The username.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">password</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The password (in plaintext).
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodb.authenticate-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns database response.  If the login was successful, it will return
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #007700">array(</span><span style="color: #DD0000">"ok"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  If something went wrong, it will return
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #007700">array(</span><span style="color: #DD0000">"ok"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">0</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"errmsg"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"auth&nbsp;fails"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  (&quot;auth fails&quot; could be another message, depending on database version and what
+  when wrong).
+  </p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongodb.authenticate-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   MongoDB core docs on <a href="https://docs.mongodb.com/manual/reference/command/authenticate" class="link external">&raquo;&nbsp;authenticate</a>.
+  </p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongodb.authenticate-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.2.11</td>
+       <td>
+        Emits <strong><code>E_DEPRECATED</code></strong> when used. Please pass in the
+        authentication details to the constructor.
+       </td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

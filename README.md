@@ -44,8 +44,10 @@ setting, you may need to specify its full path.
 
 ## Documentation
 
-See [the PHP manual](http://php.net/mongo).
-
+This extension's documentation was previously hosted on PHP.net but has since
+been removed. The final version of the documentation is now published in the
+``docs/`` folder of this repository and available via GitHub pages:
+https://mongodb.github.io/mongo-php-driver-legacy/
 
 ## How To Ask For Help
 

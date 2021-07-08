@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoProtocolException class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongoduplicatekeyexception.html">« MongoDuplicateKeyException</a></li>
+      <li style="float: right;"><a href="class.mongoexecutiontimeoutexception.html">MongoExecutionTimeoutException »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.exceptions.html">Exceptions</a></li>
+    <li>The MongoProtocolException class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongoprotocolexception" class="reference">
+
+ <h1 class="title">The MongoProtocolException class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;= 1.5.0)</p>
+
+
+  <div class="section" id="mongoprotocolexception.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    When talking to MongoDB 2.6.0, and later, certain operations (such as writes) may throw MongoProtocolException when the response
+    from the server did not make sense - for example during network failure (we could read the entire response) or data corruption.
+   </p>
+   <p class="para">
+    This exception is also thrown when attempting to talk newer protocols then the server supports, for example using the
+    <a href="class.mongowritebatch.html" class="classname">MongoWriteBatch</a> when talking to a MongoDB server prior to 2.6.0.
+   </p>
+  </div>
+
+
+  <div class="section" id="mongoprotocolexception.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoProtocolException</strong>
+     </span>
+     
+     <span class="ooclass">
+      <span class="modifier">extends</span>
+      <a href="class.mongoexception.html" class="classname">MongoException</a>
+     </span>
+     {</div>
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Inherited properties */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">protected</span>
+     <span class="type">string</span>
+      <var class="varname"><a href=".html#exception.props.message">$<var class="varname">message</var></a></var>;</div>
+<div class="fieldsynopsis"><span class="modifier">protected</span>
+     <span class="type">int</span>
+      <var class="varname"><a href=".html#exception.props.code">$<var class="varname">code</var></a></var>;</div>
+<div class="fieldsynopsis"><span class="modifier">protected</span>
+     <span class="type">string</span>
+      <var class="varname"><a href=".html#exception.props.file">$<var class="varname">file</var></a></var>;</div>
+<div class="fieldsynopsis"><span class="modifier">protected</span>
+     <span class="type">int</span>
+      <var class="varname"><a href=".html#exception.props.line">$<var class="varname">line</var></a></var>;</div>
+
+
+   }</div>
+
+
+  </div>
+
+  <div class="section" id="mongoprotocolexception.examples">
+   <h2 class="title">Examples</h2>
+   <div class="example" id="mongoprotocolexception.example.catch">
+    <p><strong>Example #1 Catching MongoProtocolException</strong></p>
+    <div class="example-contents"><p>
+     Running the following example against MongoDB prior to 2.6.0 will throw an MongoProtocolException
+    </p></div>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$mc&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"localhost"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$mc</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(</span><span style="color: #DD0000">"test"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"test"</span><span style="color: #007700">);<br /><br />try&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">$batch&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoInsertBatch</span><span style="color: #007700">(</span><span style="color: #0000BB">$c</span><span style="color: #007700">);<br />}&nbsp;catch(</span><span style="color: #0000BB">MongoProtocolException&nbsp;$e</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;</span><span style="color: #0000BB">$e</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getMessage</span><span style="color: #007700">();<br />}<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+    <div class="example-contents"><p>The above examples will output
+something similar to:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+Current primary does not have a Write API
+</pre></div>
+    </div>
+   </div>
+  </div>
+
+
+ </div>
+
+</div>
+</div></div></body></html>

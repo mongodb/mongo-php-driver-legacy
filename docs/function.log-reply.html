@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Callback When Reading the MongoDB reply</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="function.log-killcursor.html">« log_killcursor</a></li>
+      <li style="float: right;"><a href="function.log-write-batch.html">log_write_batch »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.context.html">Stream Context Options</a></li>
+    <li>Callback When Reading the MongoDB reply</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="function.log-reply" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">log_reply</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.5.0)</p><p class="refpurpose"><span class="refname">log_reply</span> &mdash; <span class="dc-title">Callback When Reading the MongoDB reply</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-function.log-reply-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="methodname"><strong>log_reply</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$server</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$messageHeaders</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$operationHeaders</code></span>)</div>
+
+  <p class="para rdfs-comment">
+   A <span class="type"><a href="language.types.callable.html" class="type callable">callable</a></span> function, used by the
+   <a href="" class="link">log_reply context option</a>,
+   when reading a reply from MongoDB.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    This is <em class="emphasis">not</em> a real function, only a prototype of how the function should
+    be.
+   </p>
+  </p></blockquote>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-function.log-reply-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+     <dt>
+ <code class="parameter">server</code> </dt>
+ <dd>
+ <p class="para"> An array containing the basic information about the server that was picked. <table class="doctable informaltable">  <thead> <tr> <th>key</th> <th>value</th> </tr>
+ </thead>
+ <tbody class="tbody"> <tr> <td>hash</td> <td>server hash, example: <code class="literal">localhost:27017;-;X;56052</code></td> </tr>
+ <tr> <td>type</td> <td>Node type (primary/secondary/mongos/arbiter): <code class="literal">2</code></td> </tr>
+ <tr> <td>max_bson_size</td> <td>The maximum BSON Size over the wire this node accepts: <code class="literal">16777216</code></td> </tr>
+ <tr> <td>max_message_size</td> <td>The maximum Message Size over the wire this node accepts: <code class="literal">48000000</code></td> </tr>
+ <tr> <td>request_id</td> <td>The request identifier for this message: <code class="literal">42</code></td> </tr>
+ </tbody>  </table>
+ </p> </dd>
+ 
+   
+    <dt>
+
+     <code class="parameter">messageHeaders</code>
+    </dt>
+
+    <dd>
+
+     <p class="para">
+      <table class="doctable informaltable">
+       
+        <thead>
+         <tr>
+          <th>key</th>
+          <th>value</th>
+         </tr>
+
+        </thead>
+
+        <tbody class="tbody">
+         <tr>
+          <td>length</td>
+          <td>integer, bytes, message reply length</td>
+         </tr>
+
+         <tr>
+          <td>request_id</td>
+          <td>integer, the server request identifier</td>
+         </tr>
+
+         <tr>
+          <td>response_id</td>
+          <td>integer, the driver request identifier this message is a response of</td>
+         </tr>
+
+         <tr>
+          <td>opcode</td>
+          <td>integer, the opcode id</td>
+         </tr>
+
+        </tbody>
+       
+      </table>
+
+     </p>
+    </dd>
+
+   
+   
+    <dt>
+
+     <code class="parameter">operationHeaders</code>
+    </dt>
+
+    <dd>
+
+     <p class="para">
+      <table class="doctable informaltable">
+       
+        <thead>
+         <tr>
+          <th>key</th>
+          <th>value</th>
+         </tr>
+
+        </thead>
+
+        <tbody class="tbody">
+         <tr>
+          <td>flags</td>
+          <td>integer, bitmask of protocol flags</td>
+         </tr>
+
+         <tr>
+          <td>cursor_id</td>
+          <td>integer, ID of the cursor created on the server (0 if none created, or its been exhausted)</td>
+         </tr>
+
+         <tr>
+          <td>start</td>
+          <td>The starting offset of this cursor</td>
+         </tr>
+
+         <tr>
+          <td>returned</td>
+          <td>integer, how many documents are returned in this trip</td>
+         </tr>
+
+        </tbody>
+       
+      </table>
+
+     </p>
+    </dd>
+
+   
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-function.log-reply-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member">The <a href="https://docs.mongodb.com/meta-driver/latest/legacy/mongodb-wire-protocol/" class="link external">&raquo;&nbsp;OP_REPLY definition in the Wire Protocol</a></li>
+  </ul>
+ </div>
+
+
+
+</div></div></div></body></html>

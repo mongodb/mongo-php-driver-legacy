@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoMinKey class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodbref.isref.html">« MongoDBRef::isRef</a></li>
+      <li style="float: right;"><a href="class.mongomaxkey.html">MongoMaxKey »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.types.html">Types</a></li>
+    <li>The MongoMinKey class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongominkey" class="reference">
+
+ <h1 class="title">The MongoMinKey class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;= 1.0.2)</p>
+
+  <div class="warning"><strong class="warning">Warning</strong>
+   <p class="para">This extension that defines this class
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+Alternatives to this class include:</p>
+   <ul class="simplelist">
+    <li class="member"><strong class="classname">MongoDB\BSON\MinKey</strong></li>
+   </ul>
+  </div>
+
+
+  <div class="section" id="mongominkey.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    <strong class="classname">MongoMinKey</strong> is an special type used by the database
+    that compares less than all other possible BSON values. Thus, if a query is
+    sorted by a given field in ascending order, any document with a 
+    <strong class="classname">MongoMinKey</strong> as its value will be returned first.
+   </p>
+   <p class="para">
+    <strong class="classname">MongoMinKey</strong> has no associated fields, methods, or
+    constants. It is merely the &quot;smallest&quot; value that can be represented in the
+    database.
+   </p>
+   <blockquote class="note"><p><strong class="note">Note</strong>: 
+    <span class="simpara">
+     <strong class="classname">MongoMinKey</strong> is used internally by MongoDB for
+     indexing and sharding. There is generally no reason to use this class in
+     an application.
+    </span>
+   </p></blockquote>
+  </div>
+
+
+  <div class="section" id="mongominkey.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoMinKey</strong>
+     </span>
+     {</div>
+
+   }</div>
+
+
+  </div>
+
+  <div class="section" id="mongominkey.example">
+   <h2 class="title">Using <strong class="classname">MongoMinKey</strong> as a value</h2>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"task"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"lunch"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"doBy"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoMinKey</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"task"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">"staff&nbsp;meeting"</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">"doBy"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoDate</span><span style="color: #007700">(</span><span style="color: #0000BB">strtotime</span><span style="color: #007700">(</span><span style="color: #DD0000">"+4&nbsp;days"</span><span style="color: #007700">))));<br /><br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">()-&gt;</span><span style="color: #0000BB">sort</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"doBy"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <p class="para">
+    The cursor will return the lunch document followed by the staff meeting
+    document. The lunch document will always be returned first, regardless of
+    what else is added to the collection (unless other documents are added with
+    <strong class="classname">MongoMinKey</strong> in their &quot;doBy&quot; field).
+   </p>
+  </div>
+
+  <div class="simplesect">
+   <h3 class="title">See Also</h3>
+   <ul class="simplelist">
+    <li class="member"><a href="class.mongomaxkey.html" class="classname">MongoMaxKey</a></li>
+   </ul>
+  </div>
+ </div>
+
+</div>
+</div></div></body></html>

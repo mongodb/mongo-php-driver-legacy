@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>If this query should fetch partial results from mongos if a shard is down</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.next.html">« MongoCursor::next</a></li>
+      <li style="float: right;"><a href="mongocursor.reset.html">MongoCursor::reset »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>If this query should fetch partial results from mongos if a shard is down</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.partial" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::partial</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.2.0)</p><p class="refpurpose"><span class="refname">MongoCursor::partial</span> &mdash; <span class="dc-title">If this query should fetch partial results from <em class="emphasis">mongos</em> if a shard is down</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.partial-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::partial</strong></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$okay</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+  <p class="para rdfs-comment">
+   This option allows <em class="emphasis">mongos</em> to send partial query results 
+   if a shard is unreachable.  This is only applicable when running a sharded 
+   MongoDB cluster and connecting to a <em class="emphasis">mongos</em>.
+  </p>
+  <p class="para">
+   If a shard goes down and a query needs to be sent to that shard, 
+   <em class="emphasis">mongos</em> will return the results (if any) from shards it
+   already contacted, then an error message that it could not reach the shard
+   (a <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> in PHP).  If you would like to
+   get whatever results <em class="emphasis">mongos</em> can provide and no 
+   exception, you can use this method.  Note that this means that you won&#039;t have
+   an indication that a shard is down in your query response.
+  </p>
+  <p class="para">
+   This has no effect on the query if all shards are reachable.  This flag was
+   implemented in MongoDB version 1.7.5, so will only work with that version and
+   higher.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.partial-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">okay</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       If receiving partial results is okay.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+ 
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.partial-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns this cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.partial-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if this cursor has started iterating.
+  </p>
+ </div>
+
+</div></div></div></body></html>

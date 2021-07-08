@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Checks if there are results that have not yet been sent from the database</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.current.html">« MongoCursor::current</a></li>
+      <li style="float: right;"><a href="mongocursor.doquery.html">MongoCursor::doQuery »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Checks if there are results that have not yet been sent from the database</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.dead" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::dead</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.6)</p><p class="refpurpose"><span class="refname">MongoCursor::dead</span> &mdash; <span class="dc-title">Checks if there are results that have not yet been sent from the database</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.dead-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::dead</strong></span>(): <span class="type">bool</span></div>
+
+  <p class="para rdfs-comment">
+   The database sends responses in batches of documents, up to 4MB of documents
+   per response. This method checks if the database has more batches or if the 
+   result set has been exhausted.
+  </p>
+  <p class="para">
+   A cursor being &quot;dead&quot; does not mean that 
+   <span class="function"><a href="mongocursor.hasnext.html" class="function">MongoCursor::hasNext()</a></span> will return <strong><code>false</code></strong>, it only means
+   that the database is done sending results to the client. The client should
+   continue iterating through results until 
+   <span class="function"><a href="mongocursor.hasnext.html" class="function">MongoCursor::hasNext()</a></span> is <strong><code>false</code></strong>.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.dead-parameters">
+  <h3 class="title">Parameters</h3>    
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.dead-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns <strong><code>true</code></strong> if there are more results that have not yet been sent to the
+   client, and <strong><code>false</code></strong> otherwise.
+  </p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.dead-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="methodname"><a href="mongocursorinterface.dead.html" class="methodname" rel="rdfs-seeAlso">MongoCursorInterface::dead()</a> - Checks if there are results that have not yet been sent from the database</span></li>
+  </ul>
+ </div>
+
+</div></div></div></body></html>

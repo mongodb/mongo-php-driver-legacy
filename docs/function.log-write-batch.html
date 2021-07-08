@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Callback When Writing Batches</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="function.log-reply.html">« log_reply</a></li>
+      <li style="float: right;"><a href="mongo.writes.html">Writes »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.context.html">Stream Context Options</a></li>
+    <li>Callback When Writing Batches</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="function.log-write-batch" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">log_write_batch</h1>
+  <p class="verinfo">(PECL mongo &gt;= 1.5.0)</p><p class="refpurpose"><span class="refname">log_write_batch</span> &mdash; <span class="dc-title">Callback When Writing Batches</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-function.log-write-batch-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="methodname"><strong>log_write_batch</strong></span>(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$server</code></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$writeOptions</code></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$batch</code></span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="methodparam"><span class="type">array</span> <code class="parameter">$protocolOptions</code></span><br>)</div>
+
+  <p class="para rdfs-comment">
+   A <span class="type"><a href="language.types.callable.html" class="type callable">callable</a></span> function, used by the
+   <a href="" class="link">log_write_batch context option</a>,
+   when executing a batch operation.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    This is <em class="emphasis">not</em> a real function, only a prototype of how the function should
+    be.
+   </p>
+  </p></blockquote>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-function.log-write-batch-parameters">
+  <h3 class="title">Parameters</h3>
+  <dl>
+
+     <dt>
+ <code class="parameter">server</code> </dt>
+ <dd>
+ <p class="para"> An array containing the basic information about the server that was picked. <table class="doctable informaltable">  <thead> <tr> <th>key</th> <th>value</th> </tr>
+ </thead>
+ <tbody class="tbody"> <tr> <td>hash</td> <td>server hash, example: <code class="literal">localhost:27017;-;X;56052</code></td> </tr>
+ <tr> <td>type</td> <td>Node type (primary/secondary/mongos/arbiter): <code class="literal">2</code></td> </tr>
+ <tr> <td>max_bson_size</td> <td>The maximum BSON Size over the wire this node accepts: <code class="literal">16777216</code></td> </tr>
+ <tr> <td>max_message_size</td> <td>The maximum Message Size over the wire this node accepts: <code class="literal">48000000</code></td> </tr>
+ <tr> <td>request_id</td> <td>The request identifier for this message: <code class="literal">42</code></td> </tr>
+ </tbody>  </table>
+ </p> </dd>
+ 
+    <dt>
+ <code class="parameter">writeOptions</code> </dt>
+ <dd>
+ <p class="para"> <table class="doctable informaltable">  <thead> <tr> <th>key</th> <th>value</th> </tr>
+ </thead>
+ <tbody class="tbody"> <tr> <td>ordered</td> <td>boolean, if the operation (in case of batch operation) must be executed sequentually (ordered=true)</td> </tr>
+ <tr> <td>writeConcern</td> <td>An array of writeConcern options (see below)</td> </tr>
+ </tbody>  </table>
+ <table class="doctable table"> <caption><strong>writeConcern array values</strong></caption>  <thead> <tr> <th>key</th> <th>value</th> </tr>
+ </thead>
+ <tbody class="tbody"> <tr> <td>fsync</td> <td>boolean, force flushing to disk before returning</td> </tr>
+ <tr> <td>j</td> <td>boolean, force journal write before returning</td> </tr>
+ <tr> <td>wtimeout</td> <td>integer, milliseconds, maximum time the primary is allowed to wait to verify replication</td> </tr>
+ <tr> <td>w</td> <td>integer=server count, or string=replication-tag</td> </tr>
+ </tbody>  </table>
+ </p> </dd>
+ 
+   
+    <dt>
+
+     <code class="parameter">batch</code>
+    </dt>
+
+    <dd>
+
+     <p class="para">
+      Array, the actual batch operation.
+     </p>
+    </dd>
+
+   
+     <dt>
+ <code class="parameter">protocolOptions</code> </dt>
+ <dd>
+ <p class="para"> <table class="doctable informaltable">  <thead> <tr> <th>key</th> <th>value</th> </tr>
+ </thead>
+ <tbody class="tbody"> <tr> <td>message_length</td> <td>The total size (in bytes) of the encoded message being sent over the wire</td> </tr>
+ <tr> <td>request_id</td> <td>The request identifier for this message: <code class="literal">42</code></td> </tr>
+ <tr> <td>namespace</td> <td>The MongoDB namespace used for the protocol message <code class="literal">dbname.collectionname</code></td> </tr>
+ </tbody>  </table>
+ </p> </dd>
+ 
+  </dl>
+
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-function.log-write-batch-changelog">
+  <h3 class="title">Changelog</h3>
+  <table class="doctable informaltable">
+   
+    <thead>
+     <tr>
+      <th>Version</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody class="tbody">
+     <tr>
+      <td>PECL mongo 1.5.0</td>
+      <td>
+       Only available when connected to MongoDB 2.6.0+
+      </td>
+     </tr>
+
+    </tbody>
+   
+  </table>
+
+ </div>
+
+
+
+</div></div></div></body></html>

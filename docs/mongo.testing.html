@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Running the Driver's Tests</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.trouble.html">« Troubleshooting</a></li>
+      <li style="float: right;"><a href="mongo.core.html">Core Classes »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>Running the Driver's Tests</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.testing" class="chapter">
+ <h1>Running the Driver&#039;s Tests</h1>
+
+
+ <p class="para">
+  The PECL package does not come with the tests, but they are available at 
+  <a href="https://github.com/mongodb/mongo-php-driver-legacy" class="link external">&raquo;&nbsp;Github</a>.
+ </p>
+
+ <div class="section">
+  <h2 class="title">.phpt Tests</h2>
+  <p class="para">
+   .phpt tests are the standard way of testing PHP extensions. After compiling
+   the MongoDB driver with &quot;make&quot; you can then issue &quot;make test&quot; to run the
+   tests. These tests require MongoDB to be working, and hence, you need to
+   configure the test suite itself.
+  </p>
+  <p class="para">
+   There is more information on running the tests in the contributing
+   guidelines on 
+   <a href="https://github.com/mongodb/mongo-php-driver/blob/master/CONTRIBUTING.md#running-the-tests" class="link external">&raquo;&nbsp;GitHub</a>.
+  </p>
+ </div>
+
+ <div class="section">
+  <h2 class="title">Reporting Errors</h2>
+  <p class="para">
+   Please report any failures or errors in the 
+   <a href="https://jira.mongodb.org/browse/PHP" class="link external">&raquo;&nbsp;bugtracker</a>.  There may be skipped 
+   tests, these are normal and can be ignored.
+  </p>
+  <p class="para">
+   New tests are always welcome!  Please feel free to contribute new tests of any
+   type testing any functionality.
+  </p>
+ </div>
+</div>
+</div></div></body></html>

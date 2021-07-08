@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Security</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.updates.html">« Updates</a></li>
+      <li style="float: right;"><a href="mongo.trouble.html">Troubleshooting »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.manual.html">Manual</a></li>
+    <li>Security</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.security" class="chapter">
+ <h1>Security</h1>
+
+
+ <div class="section">
+  <h2 class="title">Request Injection Attacks</h2>
+  <p class="para">
+   If you are passing <code class="literal">$_GET</code> (or <code class="literal">$_POST</code>)
+   parameters to your queries, make sure that they are cast to strings first.
+   Users can insert associative arrays in GET and POST requests, which could
+   then become unwanted $-queries.
+  </p>
+
+  <p class="para">
+   A fairly innocuous example: suppose you are looking up a user&#039;s information
+   with the request <em class="emphasis">http://www.example.com?username=bob</em>.
+   Your application does the query
+   <code class="literal">$collection-&gt;find(array(&quot;username&quot; =&gt; $_GET[&#039;username&#039;]))</code>.
+  </p>
+
+  <p class="para">
+   Someone could subvert this by getting
+   <em class="emphasis">http://www.example.com?username[$ne]=foo</em>, which PHP
+   will magically turn into an associative array, turning your query into
+   <code class="literal">$collection-&gt;find(array(&quot;username&quot; =&gt; array(&#039;$ne&#039; =&gt; &quot;foo&quot;)))</code>,
+   which will return all users not named &quot;foo&quot; (all of your users, probably).
+  </p>
+
+  <p class="para">
+   This is a fairly easy attack to defend against: make sure $_GET and $_POST
+   parameters are the type you expect before you send them to the database
+   (cast them to strings, in this case).
+  </p>
+
+  <p class="para">
+   Note that this type of attack can be used with any databases interation that
+   locates a document, including updates, upserts, find-and-modifies, and
+   removes.
+  </p>
+
+  <p class="para">
+   Thanks to <a href="https://www.idontplaydarts.com/2010/07/mongodb-is-vulnerable-to-sql-injection-in-php-at-least/" class="link external">&raquo;&nbsp;Phil</a> for pointing this out.
+  </p>
+
+  <p class="para">
+   See <a href="https://docs.mongodb.com/manual/security/" class="link external">&raquo;&nbsp;the main documentation</a>
+   for more information about SQL-injection-like issues with MongoDB.
+  </p>
+ </div>
+
+ <div class="section">
+  <h2 class="title">Script Injection Attacks</h2>
+  <p class="para">
+   If you are using JavaScript, make sure that any variables that cross the PHP-
+   to-JavaScript boundry are passed in the <code class="literal">scope</code> field of
+   <a href="class.mongocode.html" class="classname">MongoCode</a>, not interpolated into the JavaScript
+   string. This can come up when using <span class="function"><a href="mongodb.execute.html" class="function">MongoDB::execute()</a></span>,
+   <code class="literal">$where</code> clauses, MapReduces, group-bys, and any other time
+   you may pass JavaScript into the database.
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    MapReduce ignore the <code class="literal">scope</code> field of
+    <a href="class.mongocode.html" class="classname">MongoCode</a>, but there is a <code class="literal">scope</code>
+    option on the command that can be used instead.
+   </p>
+  </p></blockquote>
+  <p class="para">
+   For example, suppose we have some JavaScript to greet a user in the database
+   logs.  We could do:
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;don't&nbsp;do&nbsp;this!<br /><br /></span><span style="color: #0000BB">$username&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$_POST</span><span style="color: #007700">[</span><span style="color: #DD0000">'username'</span><span style="color: #007700">];<br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(</span><span style="color: #DD0000">"print('Hello,&nbsp;</span><span style="color: #0000BB">$username</span><span style="color: #DD0000">!');"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  <p class="para">
+   However, what if a malicious user passes in some JavaScript?
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;don't&nbsp;do&nbsp;this!<br /><br />//&nbsp;$username&nbsp;is&nbsp;set&nbsp;to&nbsp;"');&nbsp;db.users.drop();&nbsp;print('"<br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(</span><span style="color: #DD0000">"print('Hello,&nbsp;</span><span style="color: #0000BB">$username</span><span style="color: #DD0000">!');"</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  <p class="para">
+   Now MongoDB executes the JavaScript string
+   <code class="literal">&quot;print(&#039;Hello, &#039;); db.users.drop(); print(&#039;!&#039;);&quot;</code>.
+   This attack is easy to avoid: use <code class="literal">scope</code> to pass
+   variables from PHP to JavaScript:
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$scope&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">"user"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$username</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(new&nbsp;</span><span style="color: #0000BB">MongoCode</span><span style="color: #007700">(</span><span style="color: #DD0000">"print('Hello,&nbsp;'+user+'!');"</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$scope</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  <p class="para">
+   This adds a variable <code class="literal">user</code> to the JavaScript scope. Now if
+   someone tries to send malicious code, MongoDB will harmlessly print
+   <code class="literal">Hello, &#039;); db.dropDatabase(); print(&#039;!</code>.
+  </p>
+
+  <p class="para">
+   Using <code class="literal">scope</code> helps prevent malicious input from being
+   executed by the database.  However, you must make sure that your code does
+   not turn around and execute the input anyway! For example, never use the
+   JavaScript <code class="literal">eval</code> function on user input:
+  </p>
+  <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;don't&nbsp;do&nbsp;this!<br /><br />//&nbsp;$jsShellInput&nbsp;is&nbsp;"db.users.drop();"<br /></span><span style="color: #0000BB">$scope&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">"input"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">$jsShellInput</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">execute</span><span style="color: #007700">(new&nbsp;</span><span style="color: #0000BB">MongoCode</span><span style="color: #007700">(</span><span style="color: #DD0000">"eval(input);"</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">$scope</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+  </div>
+
+  <p class="para">
+   Always use <code class="literal">scope</code> and never allow the database to execute
+   user input as code.
+  </p>
+ </div>
+</div>
+</div></div></body></html>

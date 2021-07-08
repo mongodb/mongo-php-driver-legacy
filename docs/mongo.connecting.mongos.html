@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sharding</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.connecting.rs.html">« Replica Sets</a></li>
+      <li style="float: right;"><a href="mongo.connecting.uds.html">Domain Socket Support »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.connecting.html">Connecting</a></li>
+    <li>Sharding</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongo.connecting.mongos" class="section">
+  <h2 class="title">Sharding</h2>
+  <p class="para">
+   To connect to a shard cluster, specify the address of one or more
+   <code class="literal">mongos</code> instances in the connection string. Multiple
+   servers may be delimited by a comma.
+  </p>
+  <div class="example" id="mongo.connecting.mongos-example">
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /></span><span style="color: #FF8000">//&nbsp;Using&nbsp;one&nbsp;server&nbsp;as&nbsp;the&nbsp;seed&nbsp;list<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://mongos1.example.com:27017"</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;Using&nbsp;multiple&nbsp;servers&nbsp;as&nbsp;the&nbsp;seed&nbsp;list<br /></span><span style="color: #0000BB">$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(</span><span style="color: #DD0000">"mongodb://mongos1.example.com:27017,mongos2.example.com:27017"</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <p class="para">
+   Regardless of whether each shard is a stand-alone <code class="literal">mongod</code>
+   server or a full replica set, the driver&#039;s connection process is the same.
+   All database communication will be routed through <code class="literal">mongos</code>.
+  </p>
+  <p class="para">
+   For more information on sharding with MongoDB, see the
+   <a href="https://docs.mongodb.com/manual/sharding/" class="link external">&raquo;&nbsp;sharding documentation</a>.
+  </p>
+ </div></div></div></body></html>

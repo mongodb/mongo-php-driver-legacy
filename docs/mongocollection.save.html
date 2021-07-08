@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Saves a document to this collection</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.remove.html">« MongoCollection::remove</a></li>
+      <li style="float: right;"><a href="mongocollection.setreadpreference.html">MongoCollection::setReadPreference »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Saves a document to this collection</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.save" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::save</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoCollection::save</span> &mdash; <span class="dc-title">Saves a document to this collection</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.save-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::save</strong></span>(<span class="methodparam"><span class="type"><span class="type">array</span>|<span class="type">object</span></span> <code class="parameter">$document</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span></div>
+
+  <p class="para rdfs-comment">
+   If the object is from the database, update the existing database object, otherwise 
+   insert this object.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.save-parameters">
+  <h3 class="title">Parameters</h3>    
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">document</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Array or object to save. If an object is used, it may not have protected
+       or private properties.
+      </p>
+      <blockquote class="note"><p><strong class="note">Note</strong>: 
+       <p class="para">
+        If the parameter does not have an <code class="literal">_id</code> key or
+        property, a new <a href="class.mongoid.html" class="classname">MongoId</a> instance will be created
+        and assigned to it. See <span class="function"><a href="mongocollection.insert.html" class="function">MongoCollection::insert()</a></span> for
+        additional information on this behavior.
+       </p>
+      </p></blockquote>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">options</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Options for the save.
+       <ul class="itemizedlist">
+        <li class="listitem"><p class="para"><code class="literal">&quot;fsync&quot;</code></p><p class="para">Boolean, defaults to <strong><code>false</code></strong>. If journaling is enabled, it works exactly like <code class="literal">&quot;j&quot;</code>. If journaling is not enabled, the write operation blocks until it is synced to database files on disk. If <strong><code>true</code></strong>, an acknowledged insert is implied and this option will override setting <code class="literal">&quot;w&quot;</code> to <code class="literal">0</code>.</p><blockquote class="note"><p><strong class="note">Note</strong>: <span class="simpara">If journaling is enabled, users are strongly encouraged to use the <code class="literal">&quot;j&quot;</code> option instead of <code class="literal">&quot;fsync&quot;</code>. Do not use <code class="literal">&quot;fsync&quot;</code> and <code class="literal">&quot;j&quot;</code> simultaneously, as that will result in an error.</span></p></blockquote></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;j&quot;</code></p><p class="para">Boolean, defaults to <strong><code>false</code></strong>. Forces the write operation to block until it is synced to the journal on disk. If <strong><code>true</code></strong>, an acknowledged write is implied and this option will override setting <code class="literal">&quot;w&quot;</code> to <code class="literal">0</code>.</p><blockquote class="note"><p><strong class="note">Note</strong>: <span class="simpara">If this option is used and journaling is disabled, MongoDB 2.6+ will raise an error and the write will fail; older server versions will simply ignore the option.</span></p></blockquote></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;socketTimeoutMS&quot;</code></p><p class="para">This option specifies the time limit, in milliseconds, for socket communication. If the server does not respond within the timeout period, a <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> will be thrown and there will be no way to determine if the server actually handled the write or not. A value of <code class="literal">-1</code> may be specified to block indefinitely. The default value for <a href="class.mongoclient.html" class="classname">MongoClient</a> is <code class="literal">30000</code> (30 seconds).</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;w&quot;</code></p><p class="para">See <a href="mongo.writeconcerns.html" class="link">Write Concerns</a>. The default value for <a href="class.mongoclient.html" class="classname">MongoClient</a> is <code class="literal">1</code>.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;wtimeout&quot;</code></p><p class="para">Deprecated alias for <code class="literal">&quot;wTimeoutMS&quot;</code>.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;wTimeoutMS&quot;</code></p><p class="para">This option specifies the time limit, in milliseconds, for <a href="mongo.writeconcerns.html" class="link">write concern</a> acknowledgement. It is only applicable when <code class="literal">&quot;w&quot;</code> is greater than <code class="literal">1</code>, as the timeout pertains to replication. If the write concern is not satisfied within the time limit, a <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> will be thrown. A value of <code class="literal">0</code> may be specified to block indefinitely. The default value for <a href="class.mongoclient.html" class="classname">MongoClient</a> is <code class="literal">10000</code> (ten seconds).</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;safe&quot;</code></p><p class="para">Deprecated. Please use the <a href="mongo.writeconcerns.html" class="link">write concern</a> <code class="literal">&quot;w&quot;</code> option.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;timeout&quot;</code></p><p class="para">Deprecated alias for <code class="literal">&quot;socketTimeoutMS&quot;</code>.</p></li>
+       </ul>
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.save-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   If <code class="parameter">w</code> was set, returns an array containing the status of the save.
+   Otherwise, returns a boolean representing if the array was not empty (an empty array will not 
+   be inserted).
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocollection.save-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongoexception.html" class="classname">MongoException</a> if the inserted document is
+   empty or if it contains zero-length keys. Attempting to insert an object with
+   protected and private properties will cause a zero-length key error.
+  </p>
+  <p class="para">Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if the <code class="literal">&quot;w&quot;</code> option is set and the write fails.</p><p class="para">Throws <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> if the <code class="literal">&quot;w&quot;</code> option is set to a value greater than one and the operation takes longer than <var class="varname">MongoCursor::$timeout</var> milliseconds to complete.  This does not kill the operation on the server, it is a client-side timeout. The operation in <var class="varname">MongoCollection::$wtimeout</var> is milliseconds.</p>
+ </div>
+
+
+ <div class="refsect1 changelog" id="refsect1-mongocollection.save-changelog">
+  <h3 class="title">Changelog</h3>
+  <p class="para">
+   <table class="doctable informaltable">
+    
+     <thead>
+      <tr>
+       <th>Version</th>
+       <th>Description</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>PECL mongo 1.5.0</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;wTimeoutMS&quot;</code> option, which replaces
+         <code class="literal">&quot;wtimeout&quot;</code>. Emits <strong><code>E_DEPRECATED</code></strong>
+         when <code class="literal">&quot;wtimeout&quot;</code> is used.
+        </p>
+        <p class="para">
+         Added <code class="literal">&quot;socketTimeoutMS&quot;</code> option, which replaces
+         <code class="literal">&quot;timeout&quot;</code>. Emits <strong><code>E_DEPRECATED</code></strong>
+         when <code class="literal">&quot;timeout&quot;</code> is used.
+        </p>
+        <p class="para">
+         Emits <strong><code>E_DEPRECATED</code></strong> when <code class="literal">&quot;safe&quot;</code>
+         is used.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.2.0</td>
+       <td>Added <code class="literal">&quot;timeout&quot;</code> option.</td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.0.11</td>
+       <td>
+        Disconnects on &quot;not master&quot; errors if <code class="literal">&quot;safe&quot;</code> is set.
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.0.9</td>
+       <td>
+        <p class="para">
+         Added <code class="literal">&quot;fsync&quot;</code> option.
+        </p>
+       </td>
+      </tr>
+
+      <tr>
+       <td>PECL mongo 1.0.5</td>
+       <td>Added <code class="parameter">options</code> parameter.</td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.save-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-130">
+   <p><strong>Example #1 <span class="function"><strong>MongoCollection::save()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$obj&nbsp;</span><span style="color: #007700">=&nbsp;array(</span><span style="color: #DD0000">'x'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;insert&nbsp;$obj&nbsp;into&nbsp;the&nbsp;db<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">save</span><span style="color: #007700">(</span><span style="color: #0000BB">$obj</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$obj</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;add&nbsp;another&nbsp;field<br /></span><span style="color: #0000BB">$obj</span><span style="color: #007700">[</span><span style="color: #DD0000">'foo'</span><span style="color: #007700">]&nbsp;=&nbsp;</span><span style="color: #DD0000">'bar'</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;$obj&nbsp;cannot&nbsp;be&nbsp;inserted&nbsp;again,&nbsp;causes&nbsp;duplicate&nbsp;_id&nbsp;error<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$obj</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;save&nbsp;updates&nbsp;$obj&nbsp;with&nbsp;the&nbsp;new&nbsp;field<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">save</span><span style="color: #007700">(</span><span style="color: #0000BB">$obj</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(2) {
+  [&quot;x&quot;]=&gt;
+  int(1)
+  [&quot;_id&quot;]=&gt;
+  object(MongoId)#4 (1) {
+    [&quot;$id&quot;]=&gt;
+    string(24) &quot;50b6afe544415ed606000000&quot;
+  }
+}
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+
+</div></div></div></body></html>

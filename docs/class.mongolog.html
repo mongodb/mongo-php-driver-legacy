@@ -1,0 +1,428 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoLog class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongo.miscellaneous.html">« Miscellaneous</a></li>
+      <li style="float: right;"><a href="mongolog.getcallback.html">MongoLog::getCallback »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.miscellaneous.html">Miscellaneous</a></li>
+    <li>The MongoLog class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongolog" class="reference">
+
+ <h1 class="title">The MongoLog class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;=1.2.3)</p>
+
+
+  <div class="section" id="mongolog.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    Logging can be used to get detailed information about what the driver is
+    doing. Logging is disabled by default, but this class allows you to activate
+    specific levels of logging for various parts of the driver. Some examples:
+   </p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br /></span><span style="color: #FF8000">//&nbsp;print&nbsp;every&nbsp;log&nbsp;message&nbsp;possible<br /></span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">setLevel</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">ALL</span><span style="color: #007700">);&nbsp;</span><span style="color: #FF8000">//&nbsp;all&nbsp;log&nbsp;levels<br /></span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">setModule</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">ALL</span><span style="color: #007700">);&nbsp;</span><span style="color: #FF8000">//&nbsp;all&nbsp;parts&nbsp;of&nbsp;the&nbsp;driver<br /><br />//&nbsp;print&nbsp;significant&nbsp;events&nbsp;about&nbsp;replica&nbsp;set&nbsp;failover<br /></span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">setLevel</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">INFO</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">setModule</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">RS</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;print&nbsp;info-&nbsp;and&nbsp;diagnostic-level&nbsp;events&nbsp;for&nbsp;replica&nbsp;sets&nbsp;and&nbsp;connections<br /></span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">setLevel</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">INFO</span><span style="color: #007700">|</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">FINE</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">setModule</span><span style="color: #007700">(</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">RS</span><span style="color: #007700">|</span><span style="color: #0000BB">MongoLog</span><span style="color: #007700">::</span><span style="color: #0000BB">CON</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <blockquote class="note"><p><strong class="note">Note</strong>: 
+    <p class="para">
+     By default, MongoLog emits all log messages as PHP notices. Depending
+     on the <acronym title="Server Application Programming Interface">SAPI</acronym> you use, messages may be sent to
+     <code class="literal">stderr</code> (for <acronym title="Command Line Interpreter/Interface">CLI</acronym>) or the web server&#039;s
+     error log. If, after configuring MongoLog, log messages are not appearing
+     as expected, ensure that the <strong><code>E_NOTICE</code></strong> bit is included
+     in <a href="" class="link">error_reporting</a> and that
+     <a href="" class="link">display_errors</a> is on.
+    </p>
+   </p></blockquote>
+  </div>
+
+
+  <div class="section" id="mongolog.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoLog</strong>
+     </span>
+     {</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Constants */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.none"><var class="varname">NONE</var></a></var><span class="initializer"> = 0</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.all"><var class="varname">ALL</var></a></var><span class="initializer"> = 31</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo">level constants {</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.warning"><var class="varname">WARNING</var></a></var><span class="initializer"> = 1</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.info"><var class="varname">INFO</var></a></var><span class="initializer"> = 2</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.fine"><var class="varname">FINE</var></a></var><span class="initializer"> = 4</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo">module constants {</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.rs"><var class="varname">RS</var></a></var><span class="initializer"> = 1</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.pool"><var class="varname">POOL</var></a></var><span class="initializer"> = 1</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.con"><var class="varname">CON</var></a></var><span class="initializer"> = 2</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.io"><var class="varname">IO</var></a></var><span class="initializer"> = 4</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.server"><var class="varname">SERVER</var></a></var><span class="initializer"> = 8</span>
+    ;</div>
+
+    <div class="fieldsynopsis">
+     <span class="modifier">const</span>
+     <span class="type">int</span>
+      <var class="fieldsynopsis_varname"><a href="class.mongolog.html#mongolog.constants.parse"><var class="varname">PARSE</var></a></var><span class="initializer"> = 16</span>
+    ;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Fields */</div>
+    <div class="fieldsynopsis">
+     <span class="modifier">private</span>
+     <span class="modifier">static</span>
+     <span class="type">int</span>
+      <var class="varname">$<var class="varname">callback</var></var>;</div>
+
+    <div class="fieldsynopsis"><span class="modifier">private</span>
+     <span class="modifier">static</span>
+     <span class="type">int</span>
+      <var class="varname">$<var class="varname">level</var></var>;</div>
+
+    <div class="fieldsynopsis"><span class="modifier">private</span>
+     <span class="modifier">static</span>
+     <span class="type">int</span>
+      <var class="varname">$<var class="varname">module</var></var>;</div>
+
+
+    <div class="classsynopsisinfo classsynopsisinfo_comment">/* Methods */</div>
+    <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongolog.getcallback.html" class="methodname">getCallback</a></span>(): <span class="type"><a href="language.types.callable.html" class="type callable">callable</a></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongolog.getlevel.html" class="methodname">getLevel</a></span>(): <span class="type">int</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongolog.getmodule.html" class="methodname">getModule</a></span>(): <span class="type">int</span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongolog.setcallback.html" class="methodname">setCallback</a></span>(<span class="methodparam"><span class="type"><a href="language.types.callable.html" class="type callable">callable</a></span> <code class="parameter">$log_function</code></span>): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongolog.setlevel.html" class="methodname">setLevel</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$level</code></span>): <span class="type"><span class="type void">void</span></span></div>
+<div class="methodsynopsis dc-description"><span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><a href="mongolog.setmodule.html" class="methodname">setModule</a></span>(<span class="methodparam"><span class="type">int</span> <code class="parameter">$module</code></span>): <span class="type"><span class="type void">void</span></span></div>
+
+   }</div>
+
+
+  </div>
+
+  <div class="section">
+   <h2 class="title">Predefined Constants</h2>
+   <div class="section" id="mongolog.constants.types">
+    <h2 class="title">MongoLog Constants</h2>
+    <p class="para">
+     These constants can be used by both
+     <span class="function"><a href="mongolog.setlevel.html" class="function">MongoLog::setLevel()</a></span> and
+     <span class="function"><a href="mongolog.setmodule.html" class="function">MongoLog::setModule()</a></span>.
+    </p>
+
+    <dl>
+
+     
+      <dt id="mongolog.constants.none"><strong><code>MongoLog::NONE</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log nothing.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.all"><strong><code>MongoLog::ALL</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log everything.
+       </span>
+      </dd>
+
+     
+    </dl>
+
+   </div>
+
+   <div class="section" id="mongolog.constants.level">
+    <h2 class="title">MongoLog Level Constants</h2>
+    <p class="para">
+     These constants can be used by <span class="function"><a href="mongolog.setlevel.html" class="function">MongoLog::setLevel()</a></span>.
+    </p>
+    <dl>
+
+     
+      <dt id="mongolog.constants.warning"><strong><code>MongoLog::WARNING</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log events that are somewhat exceptional, but not quite worthy of an
+        actual exception (e.g. recoverable connection errors).
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.info"><strong><code>MongoLog::INFO</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log events that may be of interest to administrators, but are not
+        particularly noteworthy (e.g. option parsing, authentication steps).
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.fine"><strong><code>MongoLog::FINE</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log most events that the driver performs (e.g. server selection, socket
+        communication). Depending on the module being logged, this can be
+        extremely noisy and is primarily useful for debugging.
+       </span>
+      </dd>
+
+     
+    </dl>
+
+   </div>
+
+   <div class="section" id="mongolog.constants.module">
+    <h2 class="title">MongoLog Module Constants</h2>
+    <p class="para">
+     These constants can be used by <span class="function"><a href="mongolog.setmodule.html" class="function">MongoLog::setModule()</a></span>.
+    </p>
+    <dl>
+
+     
+      <dt id="mongolog.constants.con"><strong><code>MongoLog::CON</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log connection activity. Creating new connections, authentication,
+        pinging, timeouts, etc.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.io"><strong><code>MongoLog::IO</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log traffic to/from the database. Unless your program is trivial, this
+        will create an enormous number of log messages.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.parse"><strong><code>MongoLog::PARSE</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log parsing of the connection string and options when constructing
+        <a href="class.mongoclient.html" class="classname">MongoClient</a>.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.pool"><strong><code>MongoLog::POOL</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Previously used to log connection pool activity. This option is now a
+        deprecated alias of <strong><code>MongoLog::RS</code></strong>.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.rs"><strong><code>MongoLog::RS</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Log replica set activity. Failovers, read preference selection, etc.
+       </span>
+      </dd>
+
+     
+     
+      <dt id="mongolog.constants.server"><strong><code>MongoLog::SERVER</code></strong></dt>
+
+      <dd>
+
+       <span class="simpara">
+        Previously used to log server status changes. This option is deprecated
+        in favor of <strong><code>MongoLog::RS</code></strong>.
+       </span>
+      </dd>
+
+     
+    </dl>
+
+   </div>
+  </div>
+
+  <div class="section">
+   <h2 class="title">Changelog</h2>
+   <p class="para">
+    <table class="doctable informaltable">
+     
+      <thead>
+       <tr>
+        <th>Version</th>
+        <th>Description</th>
+       </tr>
+
+      </thead>
+
+      <tbody class="tbody">
+       <tr>
+        <td>PECL mongo 1.3.0</td>
+        <td>
+         Added <strong><code>MongoLog::CON</code></strong> and deprecated
+         <strong><code>MongoLog::POOL</code></strong> and
+         <strong><code>MongoLog::SERVER</code></strong>.
+        </td>
+       </tr>
+
+      </tbody>
+     
+    </table>
+
+   </p>
+  </div>
+
+ </div>
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2>Table of Contents</h2><ul class="chunklist chunklist_reference"><li><a href="mongolog.getcallback.html">MongoLog::getCallback</a> — Gets the previously set callback function</li><li><a href="mongolog.getlevel.html">MongoLog::getLevel</a> — Gets the level(s) currently being logged</li><li><a href="mongolog.getmodule.html">MongoLog::getModule</a> — Gets the module(s) currently being logged</li><li><a href="mongolog.setcallback.html">MongoLog::setCallback</a> — Sets a callback function to be invoked for events</li><li><a href="mongolog.setlevel.html">MongoLog::setLevel</a> — Sets the level(s) to be logged</li><li><a href="mongolog.setmodule.html">MongoLog::setModule</a> — Sets the module(s) to be logged</li></ul>
+</div>
+</div></div></body></html>

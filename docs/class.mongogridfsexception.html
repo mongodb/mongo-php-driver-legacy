@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>The MongoGridFSException class</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongoconnectionexception.html">« MongoConnectionException</a></li>
+      <li style="float: right;"><a href="class.mongoduplicatekeyexception.html">MongoDuplicateKeyException »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="mongo.exceptions.html">Exceptions</a></li>
+    <li>The MongoGridFSException class</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="class.mongogridfsexception" class="reference">
+
+ <h1 class="title">The MongoGridFSException class</h1>
+ 
+
+ <div class="partintro"><p class="verinfo">(PECL mongo &gt;= 1.0.0)</p>
+
+  
+  <div class="section" id="mongogridfsexception.intro">
+   <h2 class="title">Introduction</h2>
+   <p class="para">
+    Thrown when there are errors reading or writing files
+    to or from the database.
+   </p>
+  </div>
+  
+
+  <div class="section" id="mongogridfsexception.synopsis">
+   <h2 class="title">Class synopsis</h2>
+
+   
+   <div class="classsynopsis">
+    <div class="ooclass"></div>
+
+    
+    <div class="classsynopsisinfo">
+     <span class="ooclass">
+      <strong class="classname">MongoGridFSException</strong>
+     </span>
+     <span class="ooclass">
+      <span class="modifier">extends</span>
+      <a href="class.mongoexception.html" class="classname">MongoException</a>
+     </span>
+     {</div>
+    
+    
+   }</div>
+   
+
+  </div>
+
+  <div class="section" id="mongogridfsexception.error-codes">
+  <h2 class="title">Error codes</h2>
+  <p class="para">
+   <table class="doctable table">
+    <caption><strong><strong class="classname">MongoGridFSException</strong> error codes</strong></caption>
+    
+     <thead>
+      <tr>
+       <th>Code</th>
+       <th>Message</th>
+       <th>Reason</th>
+      </tr>
+
+     </thead>
+
+     <tbody class="tbody">
+      <tr>
+       <td>3</td>
+       <td>Could not open file <var class="varname">$filename</var></td>
+       <td>Attempting to store an invalid file, such as directory</td>
+      </tr>
+
+      <tr>
+       <td>4</td>
+       <td>File <var class="varname">$filename</var> is too large: <var class="varname">$filesize</var> bytes</td>
+       <td>Maximum filesize in GridFS is 4GB</td>
+      </tr>
+
+      <tr>
+       <td>5</td>
+       <td>could not find filehandle</td>
+       <td>Resource doesn&#039;t have a filehandle</td>
+      </tr>
+
+      <tr>
+       <td>6</td>
+       <td>no file is associate with this filehandle</td>
+       <td>Resource isn&#039;t a file resource</td>
+      </tr>
+
+      <tr>
+       <td>7</td>
+       <td>error setting up file: <var class="varname">$filename</var>s</td>
+       <td>Could not open file for reading</td>
+      </tr>
+
+      <tr>
+       <td>9</td>
+       <td>error reading file <var class="varname">$filename</var>s</td>
+       <td>Failed reading file</td>
+      </tr>
+
+      <tr>
+       <td>10</td>
+       <td>error reading filehandle</td>
+       <td>Failed reading from a resource</td>
+      </tr>
+
+      <tr>
+       <td>11</td>
+       <td>could not find uploaded file %s</td>
+       <td>Filename doesn&#039;t seem to be uploaded file</td>
+      </tr>
+
+      <tr>
+       <td>12</td>
+       <td>Couldn&#039;t find tmp_name in the $_FILES array. Are you sure the upload worked?</td>
+       <td>Uploaded filename probably failed</td>
+      </tr>
+
+      <tr>
+       <td>13</td>
+       <td>tmp_name was not a string or an array</td>
+       <td>Invalid filename given</td>
+      </tr>
+
+      <tr>
+       <td>14</td>
+       <td>couldn&#039;t find file size</td>
+       <td>The <var class="varname">length</var> property is missing</td>
+      </tr>
+
+      <tr>
+       <td>15</td>
+       <td>Cannot find filename</td>
+       <td>No filename provided, and no <var class="varname">filename</var> property set</td>
+      </tr>
+
+      <tr>
+       <td>16</td>
+       <td>could not open destination file %s</td>
+       <td>Destination filename not writable</td>
+      </tr>
+
+      <tr>
+       <td>17</td>
+       <td>error reading chunk of file</td>
+       <td>Chunk corruption</td>
+      </tr>
+
+      <tr>
+       <td>18</td>
+       <td>couldn&#039;t create a php_stream</td>
+       <td>Couldn&#039;t create a stream resource</td>
+      </tr>
+
+      <tr>
+       <td>19</td>
+       <td>couldn&#039;t find <var class="varname">property</var></td>
+       <td>Chunk corruption</td>
+      </tr>
+
+      <tr>
+       <td>20</td>
+       <td>chunk <var class="varname">number</var> has wrong size (<var class="varname">size</var>) when the max is <var class="varname">maxchunksize</var></td>
+       <td>Chunk larger then expected</td>
+      </tr>
+
+      <tr>
+       <td>21</td>
+       <td>chunk has wrong format</td>
+       <td>Chunk corruption</td>
+      </tr>
+
+     </tbody>
+    
+   </table>
+
+   </p>
+  </div>
+
+ </div>
+
+</div>
+</div></div></body></html>

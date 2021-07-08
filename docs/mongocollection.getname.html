@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Returns this collection's name</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.getindexinfo.html">« MongoCollection::getIndexInfo</a></li>
+      <li style="float: right;"><a href="mongocollection.getreadpreference.html">MongoCollection::getReadPreference »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Returns this collection's name</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.getname" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::getName</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoCollection::getName</span> &mdash; <span class="dc-title">Returns this collection&#039;s name</span></p>
+
+ </div>
+ <div class="refsect1 description" id="refsect1-mongocollection.getname-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::getName</strong></span>(): <span class="type">string</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.getname-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.getname-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns the name of this collection.
+  </p>
+ </div>
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.getname-examples">
+  <h3 class="title">Examples</h3>
+  <p class="para">
+   <div class="example" id="example-120">
+    <p><strong>Example #1 <span class="function"><strong>MongoCollection::getName()</strong></span> example</strong></p>
+    <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">();<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">foo</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">bar</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">baz</span><span style="color: #007700">;<br /><br />echo&nbsp;</span><span style="color: #DD0000">"Working&nbsp;with&nbsp;collection&nbsp;"&nbsp;</span><span style="color: #007700">.&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getName</span><span style="color: #007700">()&nbsp;.&nbsp;</span><span style="color: #DD0000">".\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;the&nbsp;full&nbsp;namespace&nbsp;is&nbsp;given&nbsp;by&nbsp;the&nbsp;MongoCollection::__toString()&nbsp;method<br /></span><span style="color: #007700">echo&nbsp;</span><span style="color: #DD0000">"Working&nbsp;in&nbsp;namespace&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #DD0000">.\n"</span><span style="color: #007700">;<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+    </div>
+
+    <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+    <div class="example-contents screen">
+<div class="cdata"><pre>
+Working with collection bar.baz.
+Working in namespace foo.bar.baz.
+</pre></div>
+    </div>
+   </div>
+  </p>
+ </div>
+
+</div></div></div></body></html>

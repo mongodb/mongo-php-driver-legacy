@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Creates a new database reference</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="class.mongodbref.html">« MongoDBRef</a></li>
+      <li style="float: right;"><a href="mongodbref.get.html">MongoDBRef::get »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodbref.html">MongoDBRef</a></li>
+    <li>Creates a new database reference</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodbref.create" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDBRef::create</h1>
+  <p class="verinfo">(PECL mongo &gt;= 0.9.0)</p><p class="refpurpose"><span class="refname">MongoDBRef::create</span> &mdash; <span class="dc-title">Creates a new database reference</span></p>
+
+ </div>
+
+ <div id="mongodbref.create-soft-deprecation-notice" class="soft-deprecation-notice">
+  <blockquote class="sidebar">
+   <p class="para">This extension that defines this class
+is deprecated. Instead, the <a href="" class="link">MongoDB</a> extension should be used.
+There is no equivalent for this class in the new extension.</p>
+   <p class="para">
+    The concept of database references, and hence this class, has been
+    deprecated.
+   </p>
+  </blockquote>
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongodbref.create-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="modifier">static</span> <span class="methodname"><strong>MongoDBRef::create</strong></span>(<span class="methodparam"><span class="type">string</span> <code class="parameter">$collection</code></span>, <span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$id</code></span>, <span class="methodparam"><span class="type">string</span> <code class="parameter">$database</code><span class="initializer"> = ?</span></span>): <span class="type">array</span></div>
+
+  <p class="para rdfs-comment">
+   If no database is given, the current database is used.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongodbref.create-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">collection</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Collection name (without the database name).
+      </p>
+     </dd>
+
+       
+    
+     <dt>
+
+      <code class="parameter">id</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       The _id field of the object to which to link.
+      </p>
+     </dd>
+
+       
+    
+     <dt>
+
+      <code class="parameter">database</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       Database name.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodbref.create-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns the reference.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongodbref.create-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-181">
+   <p><strong>Example #1 <span class="function"><strong>MongoDBRef::create()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    This creates a database reference to a document in the 
+    <code class="literal">addresses</code> collection.  The 
+    <span class="function"><a href="mongocollection.getname.html" class="function">MongoCollection::getName()</a></span> function returns the name of 
+    the collection (not including the database name).
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$addresses&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">addresses</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$people&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$db</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">people</span><span style="color: #007700">;<br /><br /></span><span style="color: #FF8000">//&nbsp;save&nbsp;$address&nbsp;so&nbsp;it&nbsp;has&nbsp;an&nbsp;_id<br /></span><span style="color: #0000BB">$addresses</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(</span><span style="color: #0000BB">$address</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;create&nbsp;a&nbsp;reference<br /></span><span style="color: #0000BB">$ref&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">MongoDBRef</span><span style="color: #007700">::</span><span style="color: #0000BB">create</span><span style="color: #007700">(</span><span style="color: #0000BB">$addresses</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getName</span><span style="color: #007700">(),&nbsp;</span><span style="color: #0000BB">$address</span><span style="color: #007700">[</span><span style="color: #DD0000">'_id'</span><span style="color: #007700">]);<br /><br /></span><span style="color: #FF8000">//&nbsp;set&nbsp;the&nbsp;field&nbsp;in&nbsp;$person<br /></span><span style="color: #0000BB">$person</span><span style="color: #007700">[</span><span style="color: #DD0000">'address'</span><span style="color: #007700">]&nbsp;=&nbsp;</span><span style="color: #0000BB">$ref</span><span style="color: #007700">;<br /></span><span style="color: #0000BB">$people</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">save</span><span style="color: #007700">(</span><span style="color: #0000BB">$person</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongodbref.create-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="methodname"><a href="mongodb.createdbref.html" class="methodname" rel="rdfs-seeAlso">MongoDB::createDBRef()</a> - Creates a database reference</span></li>
+    <li class="member"><span class="methodname"><a href="mongocollection.createdbref.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::createDBRef()</a> - Creates a database reference</span></li>
+   </ul>
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

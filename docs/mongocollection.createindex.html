@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Creates an index on the specified field(s) if it does not already exist</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocollection.createdbref.html">« MongoCollection::createDBRef</a></li>
+      <li style="float: right;"><a href="mongocollection.deleteindex.html">MongoCollection::deleteIndex »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocollection.html">MongoCollection</a></li>
+    <li>Creates an index on the specified field(s) if it does not already exist</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocollection.createindex" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCollection::createIndex</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.5.0)</p><p class="refpurpose"><span class="refname">MongoCollection::createIndex</span> &mdash; <span class="dc-title">
+   Creates an index on the specified field(s) if it does not already exist
+  </span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocollection.createindex-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCollection::createIndex</strong></span>(<span class="methodparam"><span class="type">array</span> <code class="parameter">$keys</code></span>, <span class="methodparam"><span class="type">array</span> <code class="parameter">$options</code><span class="initializer"> = array()</span></span>): <span class="type">bool</span></div>
+
+  <p class="para rdfs-comment">
+   Creates an index on the specified field(s) if it does not already exist.
+   Fields may be indexed with a direction (e.g. ascending or descending) or a
+   special type (e.g. text, geospatial, hashed).
+  </p>
+  <blockquote class="note"><p><strong class="note">Note</strong>: 
+   <p class="para">
+    This method will use the
+    <a href="https://docs.mongodb.com/manual/reference/command/createIndexes" class="link external">&raquo;&nbsp;createIndexes</a>
+    database command when communicating with MongoDB 2.6+. For previous database
+    versions, the method will perform an insert operation on the
+    special <code class="literal">system.indexes</code> collection.
+   </p>
+  </p></blockquote>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocollection.createindex-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">keys</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       An array specifying the index&#039;s fields as its keys. For each field, the
+       value is either the index direction or
+       <a href="https://docs.mongodb.com/manual/core/index-types/" class="link external">&raquo;&nbsp;index type</a>.
+       If specifying direction, specify <code class="literal">1</code> for ascending or
+       <code class="literal">-1</code> for descending.
+      </p>
+     </dd>
+
+    
+    
+     <dt>
+
+      <code class="parameter">options</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       An array of options for the index creation. We pass all given options
+       straight to the server, but a non-exhaustive list of currently
+       available options include:
+       <ul class="itemizedlist">
+        <li class="listitem"><p class="para"><code class="literal">&quot;unique&quot;</code></p><p class="para">Specify <strong><code>true</code></strong> to create a unique index. The default value is <strong><code>false</code></strong>. This option applies only to ascending/descending indexes.</p><blockquote class="note"><p><strong class="note">Note</strong>: <p class="para">When MongoDB indexes a field, if a document does not have a value for the field, a <strong><code>null</code></strong> value is indexed. If multiple documents do not contain a field, a unique index will reject all but the first of those documents. The <code class="literal">&quot;sparse&quot;</code> option may be used to overcome this, since it will prevent documents without the field from being indexed.</p></p></blockquote></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;sparse&quot;</code></p><p class="para">Specify <strong><code>true</code></strong> to create a sparse index, which only indexes documents containing a specified field. The default value is <strong><code>false</code></strong>.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;expireAfterSeconds&quot;</code></p><p class="para">The value of this option should specify the number of seconds after which a document should be considered expired and automatically removed from the collection. This option is only compatible with single-field indexes where the field will contain <a href="class.mongodate.html" class="classname">MongoDate</a> values.</p><blockquote class="note"><p><strong class="note">Note</strong>: <p class="para">This feature is available in MongoDB 2.2+. See <a href="https://docs.mongodb.com/manual/tutorial/expire-data/" class="link external">&raquo;&nbsp;Expire Data from Collections by Setting TTL</a> for more information.</p></p></blockquote></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;name&quot;</code></p><p class="para">A optional name that uniquely identifies the index.</p><blockquote class="note"><p><strong class="note">Note</strong>: <p class="para">By default, the driver will generate an index name based on the index&#039;s field(s) and ordering or type. For example, a compound index <code class="literal">array(&quot;x&quot; =&gt; 1, &quot;y&quot; =&gt; -1)</code> would be named <code class="literal">&quot;x_1_y_-1&quot;</code> and a geospatial index <code class="literal">array(&quot;loc&quot; =&gt; &quot;2dsphere&quot;)</code> would be named <code class="literal">&quot;loc_2dsphere&quot;</code>. For indexes with many fields, it is possible that the generated name might exceed MongoDB&#039;s <a href="https://docs.mongodb.com/manual/reference/limits/#Index-Name-Length" class="link external">&raquo;&nbsp;limit for index names</a>. The <code class="literal">&quot;name&quot;</code> option may be used in that case to supply a shorter name.</p></p></blockquote></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;background&quot;</code></p><p class="para">Builds the index in the background so that building an index does <em class="emphasis">not</em> block other database activities. Specify <strong><code>true</code></strong> to build in the background. The default value is <strong><code>false</code></strong>.</p><div class="warning"><strong class="warning">Warning</strong><p class="para">Prior to MongoDB 2.6.0, index builds on secondaries were executed as foreground operations, irrespective of this option. See <a href="https://docs.mongodb.com/manual/tutorial/build-indexes-on-replica-sets/" class="link external">&raquo;&nbsp;Building Indexes with Replica Sets</a> for more information.</p></div></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;socketTimeoutMS&quot;</code></p><p class="para">This option specifies the time limit, in milliseconds, for socket communication. If the server does not respond within the timeout period, a <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> will be thrown and there will be no way to determine if the server actually handled the write or not. A value of <code class="literal">-1</code> may be specified to block indefinitely. The default value for <a href="class.mongoclient.html" class="classname">MongoClient</a> is <code class="literal">30000</code> (30 seconds).</p></li>
+       </ul>
+      </p>
+      <p class="para">
+       The following option may be used with MongoDB 2.6+:
+       <ul class="itemizedlist">
+        <li class="listitem"><p class="para"><code class="literal">&quot;maxTimeMS&quot;</code></p><p class="para">Specifies a cumulative time limit in milliseconds for processing the operation on the server (does not include idle time). If the operation is not completed by the server within the timeout period, a <a href="class.mongoexecutiontimeoutexception.html" class="classname">MongoExecutionTimeoutException</a> will be thrown.</p></li>
+       </ul>
+      </p>
+      <p class="para">
+       The following options may be used with MongoDB versions before 2.8:
+       <ul class="itemizedlist">
+        <li class="listitem"><p class="para"><code class="literal">&quot;dropDups&quot;</code></p><p class="para">Specify <strong><code>true</code></strong> to force creation of a unique index where the collection may contain duplicate values for a key. MongoDB will index the first occurrence of a key and delete all subsequent documents from the collection that contain a duplicate value for that key. The default value is <strong><code>false</code></strong>.</p><div class="warning"><strong class="warning">Warning</strong><p class="para"><code class="literal">&quot;dropDups&quot;</code> may delete data from your database. Use with extreme caution.</p></div><blockquote class="note"><p><strong class="note">Note</strong>: <p class="para">This option is not supported on MongoDB 2.8+. Index creation will fail if the collection contains duplicate values.</p></p></blockquote></li>
+       </ul>
+      </p>
+      <p class="para">
+       The following options may be used with MongoDB versions before 2.6:
+       <ul class="itemizedlist">
+        <li class="listitem"><p class="para"><code class="literal">&quot;w&quot;</code></p><p class="para">See <a href="mongo.writeconcerns.html" class="link">Write Concerns</a>. The default value for <a href="class.mongoclient.html" class="classname">MongoClient</a> is <code class="literal">1</code>.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;wTimeoutMS&quot;</code></p><p class="para">This option specifies the time limit, in milliseconds, for <a href="mongo.writeconcerns.html" class="link">write concern</a> acknowledgement. It is only applicable when <code class="literal">&quot;w&quot;</code> is greater than <code class="literal">1</code>, as the timeout pertains to replication. If the write concern is not satisfied within the time limit, a <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> will be thrown. A value of <code class="literal">0</code> may be specified to block indefinitely. The default value for <a href="class.mongoclient.html" class="classname">MongoClient</a> is <code class="literal">10000</code> (ten seconds).</p></li>
+       </ul>
+      </p>
+      <p class="para">
+       The following options are deprecated and should no longer be used:
+       <ul class="itemizedlist">
+        <li class="listitem"><p class="para"><code class="literal">&quot;safe&quot;</code></p><p class="para">Deprecated. Please use the <a href="mongo.writeconcerns.html" class="link">write concern</a> <code class="literal">&quot;w&quot;</code> option.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;timeout&quot;</code></p><p class="para">Deprecated alias for <code class="literal">&quot;socketTimeoutMS&quot;</code>.</p></li>
+        <li class="listitem"><p class="para"><code class="literal">&quot;wtimeout&quot;</code></p><p class="para">Deprecated alias for <code class="literal">&quot;wTimeoutMS&quot;</code>.</p></li>
+       </ul>
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocollection.createindex-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns an array containing the status of the index creation. The array
+   contains whether the operation succeeded (<code class="literal">&quot;ok&quot;</code>), the
+   number of indexes before and after the operation
+   (<code class="literal">&quot;numIndexesBefore&quot;</code> and
+   <code class="literal">&quot;numIndexesAfter&quot;</code>), and whether the collection that the
+   index belongs to has been created
+   (<code class="literal">&quot;createdCollectionAutomatically&quot;</code>). If the index already
+   existed and did not need to be created, a <code class="literal">&quot;note&quot;</code> field may
+   be present in lieu of <code class="literal">&quot;numIndexesAfter&quot;</code>.
+  </p>
+  <p class="para">
+   With MongoDB 2.4 and earlier, a status document is only returned if the
+   <a href="mongo.writeconcerns.html" class="link">write concern</a> is at least
+   <code class="literal">1</code>. Otherwise, <strong><code>true</code></strong> is returned. The fields in the status
+   document are different, except for the <code class="literal">&quot;ok&quot;</code> field, which
+   signals whether the index creation was successful. Additional fields are
+   described in the documentation for
+   <span class="function"><a href="mongocollection.insert.html" class="function">MongoCollection::insert()</a></span>.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocollection.createindex-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongoexception.html" class="classname">MongoException</a> if the index name is longer
+   than 128 bytes, or if the index specification is not an array.
+  </p>
+  <p class="para">
+   Throws <a href="class.mongoduplicatekeyexception.html" class="classname">MongoDuplicateKeyException</a> if the server could not
+   create the unique index due to conflicting documents.
+  </p>
+  <p class="para">
+   Throws <a href="class.mongoresultexception.html" class="classname">MongoResultException</a> if the server could not
+   create the index due to an error.
+  </p>
+  <p class="para">Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if the <code class="literal">&quot;w&quot;</code> option is set and the write fails.</p><p class="para">Throws <a href="class.mongocursortimeoutexception.html" class="classname">MongoCursorTimeoutException</a> if the <code class="literal">&quot;w&quot;</code> option is set to a value greater than one and the operation takes longer than <var class="varname">MongoCursor::$timeout</var> milliseconds to complete.  This does not kill the operation on the server, it is a client-side timeout. The operation in <var class="varname">MongoCollection::$wtimeout</var> is milliseconds.</p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocollection.createindex-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-98">
+   <p><strong>Example #1 <span class="function"><strong>MongoCollection::createIndex()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$c&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoCollection</span><span style="color: #007700">(</span><span style="color: #0000BB">$db</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'foo'</span><span style="color: #007700">);<br /><br /></span><span style="color: #FF8000">//&nbsp;create&nbsp;an&nbsp;index&nbsp;on&nbsp;'x'&nbsp;ascending<br /></span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createIndex</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'x'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;create&nbsp;a&nbsp;unique&nbsp;index&nbsp;on&nbsp;'y'<br /></span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createIndex</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'y'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">),&nbsp;array(</span><span style="color: #DD0000">'unique'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">true</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">//&nbsp;create&nbsp;a&nbsp;compound&nbsp;index&nbsp;on&nbsp;'za'&nbsp;ascending&nbsp;and&nbsp;'zb'&nbsp;descending<br /></span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createIndex</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'za'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'zb'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;-</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <div class="example" id="example-99">
+   <p><strong>Example #2 Geospatial Indexing</strong></p>
+   <div class="example-contents"><p>
+    Mongo supports geospatial indexes, which allow you to search for documents
+    near a given location or within a shape. The following example creates a
+    geospatial index on the <code class="literal">&quot;loc&quot;</code> field:
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createIndex</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'loc'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'2dsphere'</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+  <div class="example" id="example-100">
+   <p><strong>Example #3 Drop duplicates example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'username'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'joeschmoe'</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'username'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'joeschmoe'</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">/*&nbsp;Index&nbsp;creation&nbsp;fails,&nbsp;since&nbsp;you&nbsp;cannot&nbsp;create&nbsp;a&nbsp;unique&nbsp;index&nbsp;on&nbsp;a&nbsp;field&nbsp;when<br />&nbsp;*&nbsp;duplicates&nbsp;exist.<br />&nbsp;*/<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createIndex</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'username'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">),&nbsp;array(</span><span style="color: #DD0000">'unique'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">/*&nbsp;MongoDB&nbsp;will&nbsp;one&nbsp;of&nbsp;the&nbsp;conflicting&nbsp;documents&nbsp;and&nbsp;allow&nbsp;the&nbsp;unique&nbsp;index&nbsp;to<br />&nbsp;*&nbsp;be&nbsp;created.<br />&nbsp;*/<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">createIndex</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'username'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">),&nbsp;array(</span><span style="color: #DD0000">'unique'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'dropDups'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">));<br /><br /></span><span style="color: #FF8000">/*&nbsp;We&nbsp;now&nbsp;have&nbsp;a&nbsp;unique&nbsp;index&nbsp;and&nbsp;subsequent&nbsp;inserts&nbsp;with&nbsp;the&nbsp;same&nbsp;username&nbsp;will<br />&nbsp;*&nbsp;fail.<br />&nbsp;*/<br /></span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">insert</span><span style="color: #007700">(array(</span><span style="color: #DD0000">'username'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'joeschmoe'</span><span style="color: #007700">));<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocollection.createindex-seealso">
+  <h3 class="title">See Also</h3>
+  <ul class="simplelist">
+   <li class="member"><span class="methodname"><a href="mongocollection.deleteindex.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::deleteIndex()</a> - Deletes an index from this collection</span></li>
+   <li class="member"><span class="methodname"><a href="mongocollection.deleteindexes.html" class="methodname" rel="rdfs-seeAlso">MongoCollection::deleteIndexes()</a> - Delete all indices for this collection</span></li>
+   <li class="member">
+    The MongoDB
+    <a href="https://docs.mongodb.com/manual/indexes/" class="link external">&raquo;&nbsp;index</a> and
+    <a href="https://docs.mongodb.com/manual/core/index-types/" class="link external">&raquo;&nbsp;index type</a>
+    documentation.
+   </li>
+  </ul>
+ </div>
+
+
+</div></div></div></body></html>

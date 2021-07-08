@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Sets whether this cursor will wait for a while for a tailable cursor to return more data</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.addoption.html">« MongoCursor::addOption</a></li>
+      <li style="float: right;"><a href="mongocursor.batchsize.html">MongoCursor::batchSize »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Sets whether this cursor will wait for a while for a tailable cursor to return more data</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.awaitdata" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::awaitData</h1>
+  <p class="verinfo">(PECL mongo &gt;=1.2.11)</p><p class="refpurpose"><span class="refname">MongoCursor::awaitData</span> &mdash; <span class="dc-title">Sets whether this cursor will wait for a while for a tailable cursor to return more data</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.awaitdata-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::awaitData</strong></span>(<span class="methodparam"><span class="type">bool</span> <code class="parameter">$wait</code><span class="initializer"> = <strong><code>true</code></strong></span></span>): <span class="type"><a href="class.mongocursor.html" class="type MongoCursor">MongoCursor</a></span></div>
+
+  <p class="para rdfs-comment">
+   This method is to be used with tailable cursors. If we are at the end of
+   the data, block for a while rather than returning no data. After a timeout
+   period, we do return as normal.
+  </p>
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.awaitdata-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">wait</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       If the cursor should wait for more data to become available.
+      </p>
+     </dd>
+
+    
+   </dl>
+
+  </p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.awaitdata-returnvalues">
+  <h3 class="title">Return Values</h3>
+  <p class="para">
+   Returns this cursor.
+  </p>
+ </div>
+
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.awaitdata-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongocursorexception.html" class="classname">MongoCursorException</a> if this cursor has started iterating.
+  </p>
+ </div>
+
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.awaitdata-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-143">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::awaitData()</strong></span> example</strong></p>
+   <div class="example-contents"><p>
+    In this example we tail the &quot;oplog&quot; and instead of sleeping during every
+    iteration, we set the <span class="function"><strong>MongoCursor::awaitData()</strong></span> option.
+    <span class="function"><a href="mongocursor.hasnext.html" class="function">MongoCursor::hasNext()</a></span> will now block until there is
+    more data available.
+   </p></div>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br />$m&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">MongoClient</span><span style="color: #007700">(&nbsp;</span><span style="color: #DD0000">'mongodb://localhost:13000'</span><span style="color: #007700">,&nbsp;array(&nbsp;</span><span style="color: #DD0000">'replSet'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'seta'&nbsp;</span><span style="color: #007700">)&nbsp;);<br /></span><span style="color: #0000BB">$c&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$m</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">local</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">selectCollection</span><span style="color: #007700">(&nbsp;</span><span style="color: #DD0000">'oplog.rs'&nbsp;</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$c</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(&nbsp;array(&nbsp;</span><span style="color: #DD0000">'ns'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'demo.article'</span><span style="color: #007700">,&nbsp;</span><span style="color: #DD0000">'op'&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #DD0000">'i'&nbsp;</span><span style="color: #007700">)&nbsp;);<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">tailable</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">true&nbsp;</span><span style="color: #007700">);<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">awaitData</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">true&nbsp;</span><span style="color: #007700">);<br /><br />while&nbsp;(</span><span style="color: #0000BB">true</span><span style="color: #007700">)&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">hasNext</span><span style="color: #007700">())&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #FF8000">//&nbsp;we've&nbsp;read&nbsp;all&nbsp;the&nbsp;results,&nbsp;exit<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #007700">if&nbsp;(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">dead</span><span style="color: #007700">())&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(&nbsp;</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">getNext</span><span style="color: #007700">()&nbsp;);<br />&nbsp;&nbsp;&nbsp;&nbsp;}<br />}<br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+  </div>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.awaitdata-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   MongoDB core docs on <a href="https://docs.mongodb.com/manual/tutorial/create-tailable-cursor/" class="link external">&raquo;&nbsp;tailable cursors</a>.
+  </p>
+  <p class="para">
+   <ul class="simplelist">
+    <li class="member"><span class="function"><a href="mongocursor.tailable.html" class="function" rel="rdfs-seeAlso">MongoCursor::tailable()</a> - Sets whether this cursor will be left open after fetching the last results</span></li>
+   </ul>
+  </p>
+ </div>
+
+</div></div></div></body></html>

@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Return an explanation of the query, often useful for optimization and debugging</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongocursor.doquery.html">« MongoCursor::doQuery</a></li>
+      <li style="float: right;"><a href="mongocursor.fields.html">MongoCursor::fields »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongocursor.html">MongoCursor</a></li>
+    <li>Return an explanation of the query, often useful for optimization and debugging</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongocursor.explain" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoCursor::explain</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.2)</p><p class="refpurpose"><span class="refname">MongoCursor::explain</span> &mdash; <span class="dc-title">Return an explanation of the query, often useful for optimization and debugging</span></p>
+
+ </div>
+
+ <div class="refsect1 description" id="refsect1-mongocursor.explain-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoCursor::explain</strong></span>(): <span class="type">array</span></div>
+
+ </div>
+
+
+ <div class="refsect1 parameters" id="refsect1-mongocursor.explain-parameters">
+  <h3 class="title">Parameters</h3>
+  <p class="para">This function has no parameters.</p>
+ </div>
+
+
+ <div class="refsect1 returnvalues" id="refsect1-mongocursor.explain-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns an explanation of the query.
+  </p>
+ </div>
+
+ <div class="refsect1 examples" id="refsect1-mongocursor.explain-examples">
+  <h3 class="title">Examples</h3>
+  <div class="example" id="example-147">
+   <p><strong>Example #1 <span class="function"><strong>MongoCursor::explain()</strong></span> example</strong></p>
+   <div class="example-contents">
+<div class="phpcode"><code><span style="color: #000000">
+<span style="color: #0000BB">&lt;?php<br /><br />$cursor&nbsp;</span><span style="color: #007700">=&nbsp;</span><span style="color: #0000BB">$collection</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">find</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"x"</span><span style="color: #007700">=&gt;</span><span style="color: #0000BB">1</span><span style="color: #007700">),&nbsp;array(</span><span style="color: #DD0000">"y"</span><span style="color: #007700">));<br /></span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">sort</span><span style="color: #007700">(array(</span><span style="color: #DD0000">"z"&nbsp;</span><span style="color: #007700">=&gt;&nbsp;</span><span style="color: #0000BB">1</span><span style="color: #007700">))-&gt;</span><span style="color: #0000BB">limit</span><span style="color: #007700">(</span><span style="color: #0000BB">4</span><span style="color: #007700">)-&gt;</span><span style="color: #0000BB">skip</span><span style="color: #007700">(</span><span style="color: #0000BB">5</span><span style="color: #007700">);<br /><br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$cursor</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">explain</span><span style="color: #007700">());<br /><br /></span><span style="color: #0000BB">?&gt;</span>
+</span>
+</code></div>
+   </div>
+
+   <div class="example-contents"><p>The above example will output
+something similar to:</p></div>
+   <div class="example-contents screen">
+<div class="cdata"><pre>
+array(8) {
+  [&quot;cursor&quot;]=&gt;
+  string(15) &quot;BtreeCursor x_1&quot;
+  [&quot;startKey&quot;]=&gt;
+  array(1) {
+    [&quot;x&quot;]=&gt;
+    int(1)
+  }
+  [&quot;endKey&quot;]=&gt;
+  array(1) {
+    [&quot;x&quot;]=&gt;
+    int(1)
+  }
+  [&quot;nscanned&quot;]=&gt;
+  float(4)
+  [&quot;n&quot;]=&gt;
+  int(4)
+  [&quot;scanAndOrder&quot;]=&gt;
+  int(1)
+  [&quot;millis&quot;]=&gt;
+  int(3)
+  [&quot;allPlans&quot;]=&gt;
+  array(2) {
+    [0]=&gt;
+    array(3) {
+      [&quot;cursor&quot;]=&gt;
+      string(15) &quot;BtreeCursor x_1&quot;
+      [&quot;startKey&quot;]=&gt;
+      array(1) {
+        [&quot;x&quot;]=&gt;
+        int(1)
+      }
+      [&quot;endKey&quot;]=&gt;
+      array(1) {
+        [&quot;x&quot;]=&gt;
+        int(1)
+      }
+    }
+    [1]=&gt;
+    array(3) {
+      [&quot;cursor&quot;]=&gt;
+      string(11) &quot;BasicCursor&quot;
+      [&quot;startKey&quot;]=&gt;
+      array(0) {
+      }
+      [&quot;endKey&quot;]=&gt;
+      array(0) {
+      }
+    }
+  }
+}
+</pre></div>
+   </div>
+  </div>
+ </div>
+
+ <div class="refsect1 errors" id="refsect1-mongocursor.explain-errors">
+  <h3 class="title">Errors/Exceptions</h3>
+  <p class="para">
+   Throws <a href="class.mongoconnectionexception.html" class="classname">MongoConnectionException</a> if it cannot reach the 
+   database.
+  </p>
+ </div>
+
+
+ <div class="refsect1 seealso" id="refsect1-mongocursor.explain-seealso">
+  <h3 class="title">See Also</h3>
+  <p class="para">
+   MongoDB core docs on <a href="https://docs.mongodb.com/manual/reference/method/cursor.explain/" class="link external">&raquo;&nbsp;explain</a>.
+  </p>
+ </div>
+
+
+</div></div></div></body></html>

@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Drops a collection [deprecated]</title>
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-base.css" />
+<link media="all" rel="stylesheet" type="text/css" href="styles/03e73060321a0a848018724a6c83de7f-theme-medium.css" />
+
+ </head>
+ <body class="docs"><div class="navbar navbar-fixed-top">
+  <div class="navbar-inner clearfix">
+    <ul class="nav" style="width: 100%">
+      <li style="float: left;"><a href="mongodb.drop.html">« MongoDB::drop</a></li>
+      <li style="float: right;"><a href="mongodb.execute.html">MongoDB::execute »</a></li>
+    </ul>
+  </div>
+</div>
+<div id="breadcrumbs" class="clearfix">
+  <ul class="breadcrumbs-container">
+    <li><a href="index.html">PHP Manual</a></li>
+    <li><a href="class.mongodb.html">MongoDB</a></li>
+    <li>Drops a collection [deprecated]</li>
+  </ul>
+</div>
+<div id="layout">
+  <div id="layout-content"><div id="mongodb.dropcollection" class="refentry">
+ <div class="refnamediv">
+  <h1 class="refname">MongoDB::dropCollection</h1>
+  <p class="verinfo">(PECL mongo &gt;=0.9.0)</p><p class="refpurpose"><span class="refname">MongoDB::dropCollection</span> &mdash; <span class="dc-title">Drops a collection [deprecated]</span></p>
+
+ </div>
+ <div class="refsect1 description" id="refsect1-mongodb.dropcollection-description">
+  <h3 class="title">Description</h3>
+  <div class="methodsynopsis dc-description">
+   <span class="modifier">public</span> <span class="methodname"><strong>MongoDB::dropCollection</strong></span>(<span class="methodparam"><span class="type"><a href="language.types.declarations.html#language.types.declarations.mixed" class="type mixed">mixed</a></span> <code class="parameter">$coll</code></span>): <span class="type">array</span></div>
+
+
+  <div class="warning"><strong class="warning">Warning</strong>
+   <h1 class="title">Deprecated</h1>
+   <p class="para">
+    Use <span class="function"><a href="mongocollection.drop.html" class="function">MongoCollection::drop()</a></span> instead.
+   </p>
+   <p class="para">
+    <em class="emphasis">
+     This function leaks memory in version 1.0.7 and earlier!
+    </em>
+   </p>
+  </div>
+
+ </div>
+
+ <div class="refsect1 parameters" id="refsect1-mongodb.dropcollection-parameters">
+  <h3 class="title">Parameters</h3>    
+  <p class="para">
+   <dl>
+
+    
+     <dt>
+
+      <code class="parameter">coll</code>
+     </dt>
+
+     <dd>
+
+      <p class="para">
+       MongoCollection or name of collection to drop.
+      </p>
+     </dd>
+
+       
+   </dl>
+
+  </p>
+ </div>
+
+ <div class="refsect1 returnvalues" id="refsect1-mongodb.dropcollection-returnvalues">
+  <h3 class="title">Return Values</h3>  
+  <p class="para">
+   Returns the database response.
+  </p>
+ </div>
+
+</div></div></div></body></html>
