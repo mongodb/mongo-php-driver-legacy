@@ -1,4 +1,8 @@
-[![Build Status](https://travis-ci.org/mongodb/mongo-php-driver.png?branch=master)](https://travis-ci.org/mongodb/mongo-php-driver)
+# Note: This Project Is No Longer Maintained
+
+The legacy MongoDB PHP driver (i.e. `ext-mongo`) is no longer maintained and has been superseded by [mongodb/mongo-php-driver](https://github.com/mongodb/mongo-php-driver) (i.e. `ext-mongodb`). For historical reference, the documentation for this project has been archived in the `docs/` folder and may be viewed at: https://mongodb.github.io/mongo-php-driver-legacy/
+
+----
 
 ## Installation
 
