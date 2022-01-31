@@ -1,5 +1,6 @@
 # End of Life Notice
-The legacy MongoDB PHP driver (i.e. `ext-mongo`) is now officially end-of-life (EOL). No further development, bugfixes, enhancements, documentation changes or maintenance will be provided by this project and pull requests will no longer be accepted.
+
+The legacy MongoDB PHP driver (i.e. `ext-mongo`) is now officially end-of-life (EOL). No further development, bug fixes, enhancements, documentation changes or maintenance will be provided by this project and pull requests will no longer be accepted.
 
 Users are encouraged to migrate to [mongodb/mongo-php-driver](https://github.com/mongodb/mongo-php-driver) (i.e. `ext-mongodb`). 
 
