@@ -1,6 +1,9 @@
-# Note: This Project Is No Longer Maintained
+# End of Life Notice
+The legacy MongoDB PHP driver (i.e. `ext-mongo`) is now officially end-of-life (EOL). No further development, bugfixes, enhancements, documentation changes or maintenance will be provided by this project and pull requests will no longer be accepted.
 
-The legacy MongoDB PHP driver (i.e. `ext-mongo`) is no longer maintained and has been superseded by [mongodb/mongo-php-driver](https://github.com/mongodb/mongo-php-driver) (i.e. `ext-mongodb`). For historical reference, the documentation for this project has been archived in the `docs/` folder and may be viewed at: https://mongodb.github.io/mongo-php-driver-legacy/
+Users are encouraged to migrate to [mongodb/mongo-php-driver](https://github.com/mongodb/mongo-php-driver) (i.e. `ext-mongodb`). 
+
+For historical reference, the documentation for this project has been archived in the `docs/` folder and may be viewed at: https://mongodb.github.io/mongo-php-driver-legacy/
 
 ----
 
